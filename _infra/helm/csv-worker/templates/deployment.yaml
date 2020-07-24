@@ -19,6 +19,10 @@ spec:
         app: {{ .Chart.Name }}
         env: {{ .Values.env }}
     spec:
+      volumes:
+      - name: google-cloud-key
+        secret:
+          secretName: google-application-credentials
       containers:
         - name: {{ .Chart.Name }}
           {{- if eq .Values.image.tag "latest"}}
@@ -27,6 +31,9 @@ spec:
           image: "{{ .Values.image.devRepo }}/{{ .Chart.Name }}:{{ .Values.image.tag }}"
           {{- end}}
           imagePullPolicy: {{ .Values.image.pullPolicy }}
+          volumeMounts:
+          - name: google-cloud-key
+            mountPath: /var/secrets/google
           env:
           - name: PUBSUB_TOPIC
             value: sample-jobs
@@ -38,5 +45,7 @@ spec:
             value: {{.Values.sample.service.path}}
           - name: VERBOSE
             value: {{.Values.verbose | quote }}
+          - name: GOOGLE_APPLICATION_CREDENTIALS
+            value: /var/secrets/google/credentials.json
           resources:
             {{ toYaml .Values.resources | nindent 12 }}
