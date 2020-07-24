@@ -47,5 +47,7 @@ spec:
             value: {{.Values.verbose | quote }}
           - name: GOOGLE_APPLICATION_CREDENTIALS
             value: /var/secrets/google/credentials.json
+          - name: GOOGLE_CLOUD_PROJECT
+            value: {{ .Values.gcp.project }}
           resources:
             {{ toYaml .Values.resources | nindent 12 }}

@@ -20,3 +20,6 @@ sample:
     path: "/samples"
 
 verbose: true
+
+gcp:
+  project: rm-ras-sandbox
