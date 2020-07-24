@@ -1,6 +1,6 @@
 {
   "schema": "v2",
-  "application": "ras-rm-sample",
+  "application": "csv-worker",
   "name": "deployment",
   "template": {
     "artifactAccount": "front50ArtifactCredentials",
@@ -8,7 +8,7 @@
     "type": "front50/pipelineTemplate"
   },
   "variables": {
-    "service": "ras-rm-sample",
+    "service": "csv-worker",
     "defaultVersion": "1.0.0",
     "devDeploymentCluster": "dev",
     "devDeploymentNamespace": "dev"

@@ -1,6 +1,6 @@
 {
   "schema": "v2",
-  "application": "ras-rm-sample",
+  "application": "csv-worker",
   "name": "deploy baseline",
   "template": {
     "artifactAccount": "front50ArtifactCredentials",
@@ -8,7 +8,7 @@
     "type": "front50/pipelineTemplate"
   },
   "variables": {
-    "application": "ras-rm-sample"
+    "application": "csv-worker"
   },
   "exclude": [],
   "triggers": [],
