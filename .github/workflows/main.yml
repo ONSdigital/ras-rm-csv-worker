@@ -3,19 +3,15 @@ name: CI
 on:
   push:
     branches: [ master ]
-    paths:
-      - 'worker/**'
   pull_request:
     branches: [ master ]
-    paths:
-      - 'worker/**'
 
 env:
-  IMAGE: ras-rm-sample
+  IMAGE: csv-worker
   REGISTRY_HOSTNAME: eu.gcr.io
   HOST: ${{ secrets.GOOGLE_PROJECT_ID }}
   RELEASE_HOST: ${{ secrets.RELEASE_PROJECT_ID }}
-  CHART_DIRECTORY: _infra/helm/ras-rm-sample
+  CHART_DIRECTORY: _infra/helm/csv-worker
   SPINNAKER_TOPIC: ${{ secrets.SPINNAKER_TOPIC }}
   ARTIFACT_BUCKET: ${{ secrets.ARTIFACT_BUCKET }}
 

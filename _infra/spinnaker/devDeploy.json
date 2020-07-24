@@ -1,6 +1,6 @@
 {
   "schema": "v2",
-  "application": "ras-rm-sample",
+  "application": "csv-worker",
   "name": "deploy dev",
   "template": {
     "artifactAccount": "front50ArtifactCredentials",
@@ -10,7 +10,7 @@
   "variables": {
     "namespace": "dev",
     "environment": "dev",
-    "service": "ras-rm-sample"
+    "service": "csv-worker"
   },
   "exclude": [],
   "triggers": [],

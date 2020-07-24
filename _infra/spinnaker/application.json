@@ -2,5 +2,5 @@
   "cloudProviders": "kubernetes",
   "email": "warren@warrenbailey.net",
   "instancePort": 80,
-  "name": "ras-rm-sample"
+  "name": "csv-worker"
 }
