@@ -1,0 +1,38 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Chart.Name }}
+spec:
+  replicas: {{ .Values.replicas }}
+  strategy:
+    rollingUpdate:
+      maxSurge: {{ .Values.rollingUpdate.maxSurge }}
+      maxUnavailable: {{ .Values.rollingUpdate.maxUnavailable }}
+    type: RollingUpdate
+  selector:
+    matchLabels:
+      app: ras-rm-sample-csv-worker
+      env: {{ .Values.env }}
+  template:
+    metadata:
+      labels:
+        app: ras-rm-sample-csv-worker
+        env: {{ .Values.env }}
+    spec:
+      containers:
+        - name: {{ .Chart.Name }}
+          image: "{{ .Values.image.name }}/{{ .Chart.Name }}:{{ .Values.image.tag }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          env:
+          - name: PUBSUB_TOPIC
+            value: sample-jobs
+          - name: PUBSUB_SUB_ID
+            value: sample-workers
+          - name: SAMPLE_SERVICE_BASE_URL
+            value: {{.Values.sample.service.baseUrl}}
+          - name: SAMPLE_SERVICE_PATH
+            value: {{.Values.sample.service.path}}
+          - name: VERBOSE
+            value: {{.Values.verbose | quote }}
+          resources:
+            {{ toYaml .Values.resources | nindent 12 }}

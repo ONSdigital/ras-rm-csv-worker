@@ -1,0 +1,21 @@
+{
+  "schema": "v2",
+  "application": "ras-rm-sample",
+  "name": "deploy staging",
+  "template": {
+    "artifactAccount": "front50ArtifactCredentials",
+    "reference": "spinnaker://deployBaseline",
+    "type": "front50/pipelineTemplate"
+  },
+  "variables": {
+    "namespace": "staging",
+    "environment": "dev",
+    "service": "ras-rm-sample"
+  },
+  "exclude": [],
+  "triggers": [],
+  "parameters": [],
+  "notifications": [],
+  "description": "",
+  "stages": []
+}

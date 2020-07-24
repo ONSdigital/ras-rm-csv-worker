@@ -1,0 +1,19 @@
+{
+  "schema": "v2",
+  "application": "ras-rm-sample",
+  "name": "deploy baseline",
+  "template": {
+    "artifactAccount": "front50ArtifactCredentials",
+    "reference": "spinnaker://deployBaselineTailored:latest",
+    "type": "front50/pipelineTemplate"
+  },
+  "variables": {
+    "application": "ras-rm-sample"
+  },
+  "exclude": [],
+  "triggers": [],
+  "parameters": [],
+  "notifications": [],
+  "description": "",
+  "stages": []
+}
