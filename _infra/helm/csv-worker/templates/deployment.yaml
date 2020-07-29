@@ -40,7 +40,11 @@ spec:
           - name: PUBSUB_SUB_ID
             value: sample-workers
           - name: SAMPLE_SERVICE_BASE_URL
-            value: {{.Values.sample.service.baseUrl}}
+            {{- if .Values.dns.enabled }}
+            value: "http://sample.{{ .Values.namespace }}.svc.cluster.local:{{ .Values.dns.wellKnownPort }}"
+            {{- else }}
+            value: "http://$(SAMPLE_SERVICE_HOST):$(SAMPLE_SERVICE_PORT)"
+            {{- end }}
           - name: SAMPLE_SERVICE_PATH
             value: {{.Values.sample.service.path}}
           - name: VERBOSE

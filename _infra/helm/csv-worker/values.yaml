@@ -16,10 +16,13 @@ resources:
 
 sample:
   service:
-    baseUrl: "http://localhost:8080"
     path: "/samples"
 
 verbose: true
+
+dns:
+  enabled: false
+  wellKnownPort: 8080
 
 gcp:
   project: rm-ras-sandbox
