@@ -11,17 +11,17 @@ import (
 type CSVWorker struct {
 	sample []byte
 }
-
-func init() {
-	verbose := viper.GetBool("VERBOSE")
-	if verbose {
-		//anything debug and above
-		log.SetLevel(log.DebugLevel)
-	} else {
-		//otherwise keep it to info
-		log.SetLevel(log.InfoLevel)
-	}
-}
+//
+//func init() {
+//	verbose := viper.GetBool("VERBOSE")
+//	if verbose {
+//		//anything debug and above
+//		log.SetLevel(log.DebugLevel)
+//	} else {
+//		//otherwise keep it to info
+//		log.SetLevel(log.InfoLevel)
+//	}
+//}
 
 func (cw CSVWorker) start() {
 	log.Debug("starting worker process")
