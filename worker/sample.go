@@ -131,7 +131,7 @@ func (s Sample) sendHttpRequest(url string, payload []byte) error {
 		log.WithError(err).Error("error reading HTTP response")
 		return err
 	}
-	log.WithField("body", body).Debug("response received")
+	log.WithField("body", string(body)).Debug("response received")
 	if resp.StatusCode == http.StatusCreated {
 		log.Info("sample created")
 		return nil
