@@ -14,10 +14,6 @@ resources:
   requests:
     memory: "256Mi"
 
-sample:
-  service:
-    path: "/samples"
-
 verbose: true
 
 dns:

@@ -40,11 +40,14 @@ type Sample struct {
 	CELLNO        string `json:"cellNo"`
 	FORMTYPE      string `json:"formType"`
 	CURRENCY      string `json:"currency"`
+
+	sampleSummaryId string `json:"-"`
 }
 
-func processSample(line []byte) error {
+func processSample(line []byte, sampleSummaryId string) error {
 	log.Debug("processing sample")
 	s := parse(line)
+	s.sampleSummaryId = sampleSummaryId
 	return s.sendToSampleService()
 }
 
@@ -113,7 +116,7 @@ func (s Sample) marshall() ([]byte, error) {
 
 func (s Sample) getSampleServiceUrl() string {
 	sampleServiceBaseUrl := viper.GetString("SAMPLE_SERVICE_BASE_URL")
-	sampleServicePath := viper.GetString("SAMPLE_SERVICE_PATH")
+	sampleServicePath := fmt.Sprintf("/samples/%s/sampleunits/", s.sampleSummaryId)
 	sampleServiceUrl := sampleServiceBaseUrl + sampleServicePath
 	log.WithField("url", sampleServiceUrl).Info("using sample service url")
 	return sampleServiceUrl

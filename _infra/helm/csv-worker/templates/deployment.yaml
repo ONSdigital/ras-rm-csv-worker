@@ -45,8 +45,6 @@ spec:
             {{- else }}
             value: "http://$(SAMPLE_SERVICE_HOST):$(SAMPLE_SERVICE_PORT)"
             {{- end }}
-          - name: SAMPLE_SERVICE_PATH
-            value: {{.Values.sample.service.path}}
           - name: VERBOSE
             value: {{.Values.verbose | quote }}
           - name: GOOGLE_APPLICATION_CREDENTIALS

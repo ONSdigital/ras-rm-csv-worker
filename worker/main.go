@@ -13,14 +13,14 @@ type CSVWorker struct {
 }
 
 func init() {
-	//verbose := viper.GetBool("VERBOSE")
-	//if verbose {
+	verbose := viper.GetBool("VERBOSE")
+	if verbose {
 		//anything debug and above
-	log.SetLevel(log.DebugLevel)
-	//} else {
+		log.SetLevel(log.DebugLevel)
+	} else {
 		//otherwise keep it to info
-		//log.SetLevel(log.InfoLevel)
-	//}
+		log.SetLevel(log.InfoLevel)
+	}
 }
 
 func (cw CSVWorker) start() {
@@ -45,13 +45,22 @@ func (cw CSVWorker) subscribe(ctx context.Context, client *pubsub.Client) {
 		log.Info("sample received - processing")
 		log.WithField("data", string(msg.Data)).Debug("sample data")
 		cw.sample = msg.Data
-		err := processSample(cw.sample)
-		if err != nil {
-			log.WithError(err).Error("error processing sample - nacking message")
-			msg.Nack()
+
+		attribute := msg.Attributes
+		sampleSummaryId, ok := attribute["sample_summary_id"]
+		if ok  {
+			err := processSample(cw.sample, sampleSummaryId)
+			if err != nil {
+				log.WithError(err).Error("error processing sample - nacking message")
+				msg.Nack()
+			} else {
+				log.Info("sample processed - acking message")
+				msg.Ack()
+			}
 		} else {
-			log.Info("sample processed - acking message")
-			msg.Ack()
+			//TODO dead letter queue this
+			log.Error("missing sample summary id - nacking message")
+			msg.Nack()
 		}
 	})
 
@@ -67,7 +76,6 @@ func setDefaults() {
 	viper.SetDefault("WORKERS", "10")
 	viper.SetDefault("VERBOSE", true)
 	viper.SetDefault("SAMPLE_SERVICE_BASE_URL", "http://localhost:8080")
-	viper.SetDefault("SAMPLE_SERVICE_PATH", "/samples")
 }
 
 func main() {
