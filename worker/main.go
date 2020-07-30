@@ -58,9 +58,10 @@ func (cw CSVWorker) subscribe(ctx context.Context, client *pubsub.Client) {
 				msg.Ack()
 			}
 		} else {
-			//TODO dead letter queue this
 			log.Error("missing sample summary id - nacking message")
-			msg.Nack()
+			//TODO dead letter queue this but for now drop the message
+			msg.Ack()
+
 		}
 	})
 
