@@ -12,7 +12,7 @@ image:
 
 resources:
   requests:
-    memory: "256Mi"
+    memory: "32Mi"
 
 verbose: true
 
