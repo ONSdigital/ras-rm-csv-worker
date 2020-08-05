@@ -49,6 +49,7 @@ func (cw CSVWorker) subscribe(ctx context.Context, client *pubsub.Client) {
 		attribute := msg.Attributes
 		sampleSummaryId, ok := attribute["sample_summary_id"]
 		if ok  {
+			log.WithField("sampleSummaryId", sampleSummaryId).Info("about to process sample")
 			err := processSample(cw.sample, sampleSummaryId)
 			if err != nil {
 				log.WithError(err).Error("error processing sample - nacking message")
