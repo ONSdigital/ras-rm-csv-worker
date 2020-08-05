@@ -12,14 +12,13 @@ image:
 
 resources:
   requests:
-    memory: "256Mi"
-
-sample:
-  service:
-    baseUrl: "http://localhost:8080"
-    path: "/samples"
+    memory: "32Mi"
 
 verbose: true
+
+dns:
+  enabled: false
+  wellKnownPort: 8080
 
 gcp:
   project: rm-ras-sandbox

@@ -30,7 +30,7 @@ func TestSampleSuccess(t *testing.T) {
 	viper.Set("SAMPLE_SERVICE_BASE_URL", ts.URL)
 
 	sample := []byte("13110000001:::::::::::WW:::::OFFICE FOR NATIONAL STATISTICS:::::::::0001:")
-	err := processSample(sample)
+	err := processSample(sample, "test")
 	assert.Nil(err, "error should be nil")
 }
 
@@ -47,7 +47,7 @@ func TestSampleError(t *testing.T) {
 	viper.Set("SAMPLE_SERVICE_BASE_URL", ts.URL)
 
 	sample := []byte("13110000001:::::::::::WW:::::OFFICE FOR NATIONAL STATISTICS:::::::::0001:")
-	err := processSample(sample)
+	err := processSample(sample, "test")
 	assert.NotNil(t, err, "error should not be nil")
 }
 
@@ -56,8 +56,8 @@ func TestSampleServerURL(t *testing.T) {
 	assert := assert.New(t)
 	// set env variables and check url is correct
 	viper.Set("SAMPLE_SERVICE_BASE_URL", "https://127.0.0.1")
-	viper.Set("SAMPLE_SERVICE_PATH", "/test")
-	assert.Equal("https://127.0.0.1/test", s.getSampleServiceUrl())
+	s.sampleSummaryId = "test"
+	assert.Equal("https://127.0.0.1/samples/test/sampleunits/", s.getSampleServiceUrl())
 }
 
 func TestSendHttpRequest(t *testing.T) {
@@ -127,33 +127,33 @@ func TestMarshall(t *testing.T) {
 
 	sample, err := s.marshall()
 	assert.Nil(err)
-	sampleJson := "{\"SAMPLEUNITREF\":\"111\"," +
-		"\"CHECKLETTER\":\"W\"," +
-		"\"FROSIC92\":\"92\"," +
-		"\"RUSIC92\":\"r92\"," +
-		"\"FROSIC2007\":\"2007\"," +
-		"\"RUSIC2007\":\"r2007\"," +
-		"\"FROEMPMENT\":\"010120\"," +
-		"\"FROTOVER\":\"over\"," +
-		"\"ENTREF\":\"ref\"," +
-		"\"LEGALSTATUS\":\"stats\"," +
-		"\"ENTREPMKR\":\"mkr\"," +
-		"\"REGION\":\"gb\"," +
-		"\"BIRTHDATE\":\"010180\"," +
-		"\"ENTNAME1\":\"name1\"," +
-		"\"ENTNAME2\":\"name2\"," +
-		"\"ENTNAME3\":\"name3\"," +
-		"\"RUNAME1\":\"ru1\"," +
-		"\"RUNAME2\":\"ru2\"," +
-		"\"RUNAME3\":\"ru3\"," +
-		"\"TRADSTYLE1\":\"trad1\"," +
-		"\"TRADSTYLE2\":\"trad2\"," +
-		"\"TRADSTYLE3\":\"trad3\"," +
-		"\"SELTYPE\":\"type\"," +
-		"\"INCLEXCL\":\"inc\"," +
-		"\"CELLNO\":\"123\"," +
-		"\"FORMTYPE\":\"0001\"," +
-		"\"CURRENCY\":\"£\"}"
+	sampleJson := "{\"sampleUnitRef\":\"111\"," +
+		"\"checkLetter\":\"W\"," +
+		"\"frosic92\":\"92\"," +
+		"\"rusic92\":\"r92\"," +
+		"\"frosic2007\":\"2007\"," +
+		"\"rusic2007\":\"r2007\"," +
+		"\"froempment\":\"010120\"," +
+		"\"frotover\":\"over\"," +
+		"\"entref\":\"ref\"," +
+		"\"legalStatus\":\"stats\"," +
+		"\"entrepmkr\":\"mkr\"," +
+		"\"region\":\"gb\"," +
+		"\"birthdate\":\"010180\"," +
+		"\"entname1\":\"name1\"," +
+		"\"entname2\":\"name2\"," +
+		"\"entname3\":\"name3\"," +
+		"\"runame1\":\"ru1\"," +
+		"\"runame2\":\"ru2\"," +
+		"\"runame3\":\"ru3\"," +
+		"\"tradstyle1\":\"trad1\"," +
+		"\"tradstyle2\":\"trad2\"," +
+		"\"tradstyle3\":\"trad3\"," +
+		"\"seltype\":\"type\"," +
+		"\"inclexcl\":\"inc\"," +
+		"\"cellNo\":\"123\"," +
+		"\"formType\":\"0001\"," +
+		"\"currency\":\"£\"}"
 
 	assert.Equal(sampleJson, string(sample))
 }
@@ -202,31 +202,31 @@ func createSample() *Sample {
 }
 
 func createEmptySample() string {
-	return "{\"SAMPLEUNITREF\":\"\"," +
-		"\"CHECKLETTER\":\"\"," +
-		"\"FROSIC92\":\"\"," +
-		"\"RUSIC92\":\"\"," +
-		"\"FROSIC2007\":\"\"," +
-		"\"RUSIC2007\":\"\"," +
-		"\"FROEMPMENT\":\"\"," +
-		"\"FROTOVER\":\"\"," +
-		"\"ENTREF\":\"\"," +
-		"\"LEGALSTATUS\":\"\"," +
-		"\"ENTREPMKR\":\"\"," +
-		"\"REGION\":\"\"," +
-		"\"BIRTHDATE\":\"\"," +
-		"\"ENTNAME1\":\"\"," +
-		"\"ENTNAME2\":\"\"," +
-		"\"ENTNAME3\":\"\"," +
-		"\"RUNAME1\":\"\"," +
-		"\"RUNAME2\":\"\"," +
-		"\"RUNAME3\":\"\"," +
-		"\"TRADSTYLE1\":\"\"," +
-		"\"TRADSTYLE2\":\"\"," +
-		"\"TRADSTYLE3\":\"\"," +
-		"\"SELTYPE\":\"\"," +
-		"\"INCLEXCL\":\"\"," +
-		"\"CELLNO\":\"\"," +
-		"\"FORMTYPE\":\"\"," +
-		"\"CURRENCY\":\"\"}"
+	return "{\"sampleUnitRef\":\"\"," +
+		"\"checkLetter\":\"\"," +
+		"\"frosic92\":\"\"," +
+		"\"rusic92\":\"\"," +
+		"\"frosic2007\":\"\"," +
+		"\"rusic2007\":\"\"," +
+		"\"froempment\":\"\"," +
+		"\"frotover\":\"\"," +
+		"\"entref\":\"\"," +
+		"\"legalStatus\":\"\"," +
+		"\"entrepmkr\":\"\"," +
+		"\"region\":\"\"," +
+		"\"birthdate\":\"\"," +
+		"\"entname1\":\"\"," +
+		"\"entname2\":\"\"," +
+		"\"entname3\":\"\"," +
+		"\"runame1\":\"\"," +
+		"\"runame2\":\"\"," +
+		"\"runame3\":\"\"," +
+		"\"tradstyle1\":\"\"," +
+		"\"tradstyle2\":\"\"," +
+		"\"tradstyle3\":\"\"," +
+		"\"seltype\":\"\"," +
+		"\"inclexcl\":\"\"," +
+		"\"cellNo\":\"\"," +
+		"\"formType\":\"\"," +
+		"\"currency\":\"\"}"
 }

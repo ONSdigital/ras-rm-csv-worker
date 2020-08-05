@@ -13,38 +13,41 @@ import (
 )
 
 type Sample struct {
-	SAMPLEUNITREF string
-	CHECKLETTER   string
-	FROSIC92      string
-	RUSIC92       string
-	FROSIC2007    string
-	RUSIC2007     string
-	FROEMPMENT    string
-	FROTOVER      string
-	ENTREF        string
-	LEGALSTATUS   string
-	ENTREPMKR     string
-	REGION        string
-	BIRTHDATE     string
-	ENTNAME1      string
-	ENTNAME2      string
-	ENTNAME3      string
-	RUNAME1       string
-	RUNAME2       string
-	RUNAME3       string
-	TRADSTYLE1    string
-	TRADSTYLE2    string
-	TRADSTYLE3    string
-	SELTYPE       string
-	INCLEXCL      string
-	CELLNO        string
-	FORMTYPE      string
-	CURRENCY      string
+	SAMPLEUNITREF string `json:"sampleUnitRef"`
+	CHECKLETTER   string `json:"checkLetter"`
+	FROSIC92      string `json:"frosic92"`
+	RUSIC92       string `json:"rusic92"`
+	FROSIC2007    string `json:"frosic2007"`
+	RUSIC2007     string `json:"rusic2007"`
+	FROEMPMENT    string `json:"froempment"`
+	FROTOVER      string `json:"frotover"`
+	ENTREF        string `json:"entref"`
+	LEGALSTATUS   string `json:"legalStatus"`
+	ENTREPMKR     string `json:"entrepmkr"`
+	REGION        string `json:"region"`
+	BIRTHDATE     string `json:"birthdate"`
+	ENTNAME1      string `json:"entname1"`
+	ENTNAME2      string `json:"entname2"`
+	ENTNAME3      string `json:"entname3"`
+	RUNAME1       string `json:"runame1"`
+	RUNAME2       string `json:"runame2"`
+	RUNAME3       string `json:"runame3"`
+	TRADSTYLE1    string `json:"tradstyle1"`
+	TRADSTYLE2    string `json:"tradstyle2"`
+	TRADSTYLE3    string `json:"tradstyle3"`
+	SELTYPE       string `json:"seltype"`
+	INCLEXCL      string `json:"inclexcl"`
+	CELLNO        string `json:"cellNo"`
+	FORMTYPE      string `json:"formType"`
+	CURRENCY      string `json:"currency"`
+
+	sampleSummaryId string `json:"-"`
 }
 
-func processSample(line []byte) error {
+func processSample(line []byte, sampleSummaryId string) error {
 	log.Debug("processing sample")
 	s := parse(line)
+	s.sampleSummaryId = sampleSummaryId
 	return s.sendToSampleService()
 }
 
@@ -113,7 +116,7 @@ func (s Sample) marshall() ([]byte, error) {
 
 func (s Sample) getSampleServiceUrl() string {
 	sampleServiceBaseUrl := viper.GetString("SAMPLE_SERVICE_BASE_URL")
-	sampleServicePath := viper.GetString("SAMPLE_SERVICE_PATH")
+	sampleServicePath := fmt.Sprintf("/samples/%s/sampleunits/", s.sampleSummaryId)
 	sampleServiceUrl := sampleServiceBaseUrl + sampleServicePath
 	log.WithField("url", sampleServiceUrl).Info("using sample service url")
 	return sampleServiceUrl
@@ -131,7 +134,7 @@ func (s Sample) sendHttpRequest(url string, payload []byte) error {
 		log.WithError(err).Error("error reading HTTP response")
 		return err
 	}
-	log.WithField("body", body).Debug("response received")
+	log.WithField("body", string(body)).Debug("response received")
 	if resp.StatusCode == http.StatusCreated {
 		log.Info("sample created")
 		return nil
