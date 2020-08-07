@@ -38,7 +38,7 @@ spec:
           - name: PUBSUB_TOPIC
             value: {{ .Values.gcp.topic }}
           - name: PUBSUB_SUB_ID
-            value: sample-workers
+            value: {{ .Values.gcp.subscription }}
           - name: SAMPLE_SERVICE_BASE_URL
             {{- if .Values.dns.enabled }}
             value: "http://sample.{{ .Values.namespace }}.svc.cluster.local:{{ .Values.dns.wellKnownPort }}"

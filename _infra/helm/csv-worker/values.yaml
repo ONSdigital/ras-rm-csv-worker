@@ -23,3 +23,4 @@ dns:
 gcp:
   project: rm-ras-sandbox
   topic: sample-jobs
+  subscription: sample-workers
