@@ -36,7 +36,7 @@ spec:
             mountPath: /var/secrets/google
           env:
           - name: PUBSUB_TOPIC
-            value: sample-jobs
+            value: {{ .Values.gcp.topic }}
           - name: PUBSUB_SUB_ID
             value: sample-workers
           - name: SAMPLE_SERVICE_BASE_URL
