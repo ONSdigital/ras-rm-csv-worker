@@ -6,15 +6,16 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	log "github.com/sirupsen/logrus"
-	"github.com/spf13/viper"
 	"io/ioutil"
 	"net/http"
+
+	log "github.com/sirupsen/logrus"
+	"github.com/spf13/viper"
 )
 
 type Sample struct {
 	SAMPLEUNITREF string `json:"sampleUnitRef"`
-	CHECKLETTER   string `json:"checkLetter"`
+	CHECKLETTER   string `json:"checkletter"`
 	FROSIC92      string `json:"frosic92"`
 	RUSIC92       string `json:"rusic92"`
 	FROSIC2007    string `json:"frosic2007"`
@@ -22,7 +23,7 @@ type Sample struct {
 	FROEMPMENT    string `json:"froempment"`
 	FROTOVER      string `json:"frotover"`
 	ENTREF        string `json:"entref"`
-	LEGALSTATUS   string `json:"legalStatus"`
+	LEGALSTATUS   string `json:"legalstatus"`
 	ENTREPMKR     string `json:"entrepmkr"`
 	REGION        string `json:"region"`
 	BIRTHDATE     string `json:"birthdate"`
