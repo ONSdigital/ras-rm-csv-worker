@@ -9,7 +9,6 @@ import (
 )
 
 type CSVWorker struct {
-	sample []byte
 }
 
 func init() {
@@ -44,13 +43,12 @@ func (cw CSVWorker) subscribe(ctx context.Context, client *pubsub.Client) {
 	err := sub.Receive(cctx, func(ctx context.Context, msg *pubsub.Message) {
 		log.Info("sample received - processing")
 		log.WithField("data", string(msg.Data)).Debug("sample data")
-		cw.sample = msg.Data
-
+		sample := msg.Data
 		attribute := msg.Attributes
 		sampleSummaryId, ok := attribute["sample_summary_id"]
 		if ok  {
 			log.WithField("sampleSummaryId", sampleSummaryId).Info("about to process sample")
-			err := processSample(cw.sample, sampleSummaryId)
+			err := processSample(sample, sampleSummaryId)
 			if err != nil {
 				log.WithError(err).Error("error processing sample - nacking message")
 				msg.Nack()
@@ -80,6 +78,11 @@ func setDefaults() {
 	viper.SetDefault("SAMPLE_SERVICE_BASE_URL", "http://localhost:8080")
 }
 
+func work() {
+	csvWorker := &CSVWorker{}
+	csvWorker.start()
+}
+
 func main() {
 	log.Info("starting")
 	//config
@@ -88,8 +91,7 @@ func main() {
 
 	workers := viper.GetInt("WORKERS")
 	for i := 0; i < workers; i++ {
-		csvWorker := &CSVWorker{}
-		go csvWorker.start()
+		go work()
 	}
 
 	signals := make(chan os.Signal, 1)
