@@ -11,15 +11,15 @@ import (
 type CSVWorker struct {
 }
 
-func init() {
-	//verbose := viper.GetBool("VERBOSE")
-	//if verbose {
+func configureLogging() {
+	verbose := viper.GetBool("VERBOSE")
+	if verbose {
 		//anything debug and above
 		log.SetLevel(log.DebugLevel)
-	//} else {
+	} else {
 		//otherwise keep it to info
 		//log.SetLevel(log.InfoLevel)
-	//}
+	}
 }
 
 func (cw CSVWorker) start() {
@@ -88,6 +88,7 @@ func main() {
 	//config
 	viper.AutomaticEnv()
 	setDefaults()
+	configureLogging()
 
 	workers := viper.GetInt("WORKERS")
 	for i := 0; i < workers; i++ {
