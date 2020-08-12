@@ -13,14 +13,14 @@ type CSVWorker struct {
 }
 
 func init() {
-	verbose := viper.GetBool("VERBOSE")
-	if verbose {
+	//verbose := viper.GetBool("VERBOSE")
+	//if verbose {
 		//anything debug and above
 		log.SetLevel(log.DebugLevel)
-	} else {
+	//} else {
 		//otherwise keep it to info
-		log.SetLevel(log.InfoLevel)
-	}
+		//log.SetLevel(log.InfoLevel)
+	//}
 }
 
 func (cw CSVWorker) start() {
