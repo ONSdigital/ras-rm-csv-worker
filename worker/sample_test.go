@@ -2,13 +2,14 @@ package main
 
 import (
 	"fmt"
-	"github.com/spf13/viper"
-	"github.com/stretchr/testify/assert"
 	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
 	"os"
 	"testing"
+
+	"github.com/spf13/viper"
+	"github.com/stretchr/testify/assert"
 )
 
 func TestMain(m *testing.M) {
@@ -128,7 +129,7 @@ func TestMarshall(t *testing.T) {
 	sample, err := s.marshall()
 	assert.Nil(err)
 	sampleJson := "{\"sampleUnitRef\":\"111\"," +
-		"\"checkLetter\":\"W\"," +
+		"\"checkletter\":\"W\"," +
 		"\"frosic92\":\"92\"," +
 		"\"rusic92\":\"r92\"," +
 		"\"frosic2007\":\"2007\"," +
@@ -136,7 +137,7 @@ func TestMarshall(t *testing.T) {
 		"\"froempment\":\"010120\"," +
 		"\"frotover\":\"over\"," +
 		"\"entref\":\"ref\"," +
-		"\"legalStatus\":\"stats\"," +
+		"\"legalstatus\":\"stats\"," +
 		"\"entrepmkr\":\"mkr\"," +
 		"\"region\":\"gb\"," +
 		"\"birthdate\":\"010180\"," +
@@ -203,7 +204,7 @@ func createSample() *Sample {
 
 func createEmptySample() string {
 	return "{\"sampleUnitRef\":\"\"," +
-		"\"checkLetter\":\"\"," +
+		"\"checkletter\":\"\"," +
 		"\"frosic92\":\"\"," +
 		"\"rusic92\":\"\"," +
 		"\"frosic2007\":\"\"," +
@@ -211,7 +212,7 @@ func createEmptySample() string {
 		"\"froempment\":\"\"," +
 		"\"frotover\":\"\"," +
 		"\"entref\":\"\"," +
-		"\"legalStatus\":\"\"," +
+		"\"legalstatus\":\"\"," +
 		"\"entrepmkr\":\"\"," +
 		"\"region\":\"\"," +
 		"\"birthdate\":\"\"," +
