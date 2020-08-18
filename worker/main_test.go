@@ -19,7 +19,7 @@ import (
 var (
 	sample = "13110000001:::::::::::WW:::::OFFICE FOR NATIONAL STATISTICS:::::::::0001:"
 	client *pubsub.Client
-	ctx context.Context
+	ctx    context.Context
 )
 
 func TestMain(m *testing.M) {
@@ -39,7 +39,6 @@ func TestMain(m *testing.M) {
 
 	os.Exit(m.Run())
 }
-
 
 func TestSubscribe(t *testing.T) {
 	assert := assert.New(t)

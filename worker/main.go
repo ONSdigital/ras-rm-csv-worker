@@ -8,7 +8,7 @@ import (
 	"os"
 )
 
-type CSVWorker struct {}
+type CSVWorker struct{}
 
 func configureLogging() {
 	verbose := viper.GetBool("VERBOSE")
@@ -50,7 +50,7 @@ func (cw CSVWorker) subscribe(ctx context.Context, client *pubsub.Client) {
 		sample := msg.Data
 		attribute := msg.Attributes
 		sampleSummaryId, ok := attribute["sample_summary_id"]
-		if ok  {
+		if ok {
 			log.WithField("sampleSummaryId", sampleSummaryId).Info("about to process sample")
 			err := processSample(sample, sampleSummaryId)
 			if err != nil {
