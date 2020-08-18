@@ -17,6 +17,7 @@ import (
 )
 
 var (
+	sample = "13110000001:::::::::::WW:::::OFFICE FOR NATIONAL STATISTICS:::::::::0001:"
 	client *pubsub.Client
 	ctx context.Context
 )
@@ -43,39 +44,19 @@ func TestMain(m *testing.M) {
 func TestSubscribe(t *testing.T) {
 	assert := assert.New(t)
 
-	topic, err := client.CreateTopic(ctx, "sample-jobs")
-	assert.Nil(err)
-	assert.NotNil(topic)
-	fmt.Println(topic)
+	topic, err := createTopic(assert)
 	defer topic.Delete(ctx)
 
-	dlqTopic, err := client.CreateTopic(ctx, "sample-jobs-dead-letter")
-	assert.Nil(err)
-	assert.NotNil(topic)
-	fmt.Println(topic)
+	dlqTopic := createTopicDLQ(err, assert, topic)
 	defer dlqTopic.Delete(ctx)
 
-	sub, err := client.CreateSubscription(ctx, "sample-workers", pubsub.SubscriptionConfig{
-		Topic: topic,
-	})
-	assert.Nil(err)
-	assert.NotNil(sub)
-	fmt.Println(sub)
+	sub := createSubscription(err, topic, assert)
 	defer sub.Delete(ctx)
 
-	dlqTopicSub, err := client.CreateSubscription(ctx, "sample-jobs-dead-letter", pubsub.SubscriptionConfig{
-		Topic: dlqTopic,
-	})
-	assert.Nil(err)
-	assert.NotNil(sub)
-	fmt.Println(sub)
+	dlqTopicSub := createDLQSubscription(err, dlqTopic, assert, sub)
 	defer dlqTopicSub.Delete(ctx)
 
-	sample := "13110000001:::::::::::WW:::::OFFICE FOR NATIONAL STATISTICS:::::::::0001:"
-
-	s := parse([]byte(sample))
-	sampleJson, err := s.marshall()
-	assert.Nil(err)
+	sampleJson := parseSample(err, assert)
 
 	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		body, err := ioutil.ReadAll(r.Body)
@@ -94,7 +75,7 @@ func TestSubscribe(t *testing.T) {
 	msg := &pubsub.Message{
 		Data: []byte(sample),
 		Attributes: map[string]string{
-			"sample_summary_id":   "test",
+			"sample_summary_id": "test",
 		},
 	}
 
@@ -117,38 +98,63 @@ func TestSubscribe(t *testing.T) {
 	assert.Nil(dlqMsgData)
 }
 
-func TestDeadletter(t *testing.T) {
-	assert := assert.New(t)
-
-	topic, err := client.CreateTopic(ctx, "sample-jobs")
+func parseSample(err error, assert *assert.Assertions) []byte {
+	s := parse([]byte(sample))
+	sampleJson, err := s.marshall()
 	assert.Nil(err)
-	assert.NotNil(topic)
-	fmt.Println(topic)
-	defer topic.Delete(ctx)
+	return sampleJson
+}
 
-	dlqTopic, err := client.CreateTopic(ctx, "sample-jobs-dead-letter")
-	assert.Nil(err)
-	assert.NotNil(topic)
-	fmt.Println(topic)
-	defer dlqTopic.Delete(ctx)
-
-	sub, err := client.CreateSubscription(ctx, "sample-workers", pubsub.SubscriptionConfig{
-		Topic: topic,
-	})
-	assert.Nil(err)
-	assert.NotNil(sub)
-	fmt.Println(sub)
-	defer sub.Delete(ctx)
-
+func createDLQSubscription(err error, dlqTopic *pubsub.Topic, assert *assert.Assertions, sub *pubsub.Subscription) *pubsub.Subscription {
 	dlqTopicSub, err := client.CreateSubscription(ctx, "sample-jobs-dead-letter", pubsub.SubscriptionConfig{
 		Topic: dlqTopic,
 	})
 	assert.Nil(err)
 	assert.NotNil(sub)
 	fmt.Println(sub)
-	defer dlqTopicSub.Delete(ctx)
+	return dlqTopicSub
+}
 
-	sample := "13110000001:::::::::::WW:::::OFFICE FOR NATIONAL STATISTICS:::::::::0001:"
+func createSubscription(err error, topic *pubsub.Topic, assert *assert.Assertions) *pubsub.Subscription {
+	sub, err := client.CreateSubscription(ctx, "sample-workers", pubsub.SubscriptionConfig{
+		Topic: topic,
+	})
+	assert.Nil(err)
+	assert.NotNil(sub)
+	fmt.Println(sub)
+	return sub
+}
+
+func createTopicDLQ(err error, assert *assert.Assertions, topic *pubsub.Topic) *pubsub.Topic {
+	dlqTopic, err := client.CreateTopic(ctx, "sample-jobs-dead-letter")
+	assert.Nil(err)
+	assert.NotNil(topic)
+	fmt.Println(topic)
+	return dlqTopic
+}
+
+func createTopic(assert *assert.Assertions) (*pubsub.Topic, error) {
+	topic, err := client.CreateTopic(ctx, "sample-jobs")
+	assert.Nil(err)
+	assert.NotNil(topic)
+	fmt.Println(topic)
+	return topic, err
+}
+
+func TestDeadletterAsSampleSummaryIdMissing(t *testing.T) {
+	assert := assert.New(t)
+
+	topic, err := createTopic(assert)
+	defer topic.Delete(ctx)
+
+	dlqTopic := createTopicDLQ(err, assert, topic)
+	defer dlqTopic.Delete(ctx)
+
+	sub := createSubscription(err, topic, assert)
+	defer sub.Delete(ctx)
+
+	dlqTopicSub := createDLQSubscription(err, dlqTopic, assert, sub)
+	defer dlqTopicSub.Delete(ctx)
 
 	s := parse([]byte(sample))
 	sampleJson, err := s.marshall()
