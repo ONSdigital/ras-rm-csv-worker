@@ -8,8 +8,7 @@ import (
 	"os"
 )
 
-type CSVWorker struct {
-}
+type CSVWorker struct {}
 
 func configureLogging() {
 	verbose := viper.GetBool("VERBOSE")
@@ -18,7 +17,7 @@ func configureLogging() {
 		log.SetLevel(log.DebugLevel)
 	} else {
 		//otherwise keep it to info
-		//log.SetLevel(log.InfoLevel)
+		log.SetLevel(log.InfoLevel)
 	}
 }
 
@@ -64,7 +63,10 @@ func (cw CSVWorker) subscribe(ctx context.Context, client *pubsub.Client) {
 			}
 		} else {
 			log.Error("missing sample summary id - sending to DLQ")
-			deadLetter(ctx, client, msg)
+			err := deadLetter(ctx, client, msg)
+			if err != nil {
+				msg.Nack()
+			}
 		}
 	})
 
@@ -75,21 +77,20 @@ func (cw CSVWorker) subscribe(ctx context.Context, client *pubsub.Client) {
 }
 
 // send message to DLQ immediately
-func deadLetter(ctx context.Context, client *pubsub.Client,msg *pubsub.Message) {
+func deadLetter(ctx context.Context, client *pubsub.Client, msg *pubsub.Message) error {
 	//DLQ are always named TOPIC + -dead-letter in our terraform scripts
 	deadLetterTopic := viper.GetString("PUB_SUB_TOPIC") + "-dead-letter"
 	dlq := client.Topic(deadLetterTopic)
 	id, err := dlq.Publish(ctx, msg).Get(ctx)
 	if err != nil {
 		log.WithField("msg", string(msg.Data)).WithError(err).Error("unable to forward to dead letter topic")
-		msg.Nack()
+		return err
 	}
 	log.WithField("id", id).Info("published to dead letter topic")
-
+	return nil
 }
 
 func setDefaults() {
-
 	viper.SetDefault("PUBSUB_SUB_ID", "sample-workers")
 	viper.SetDefault("PUB_SUB_TOPIC", "sample-jobs")
 	viper.SetDefault("GOOGLE_CLOUD_PROJECT", "rm-ras-sandbox")
