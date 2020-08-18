@@ -8,8 +8,7 @@ import (
 	"os"
 )
 
-type CSVWorker struct {
-}
+type CSVWorker struct{}
 
 func configureLogging() {
 	verbose := viper.GetBool("VERBOSE")
@@ -18,7 +17,7 @@ func configureLogging() {
 		log.SetLevel(log.DebugLevel)
 	} else {
 		//otherwise keep it to info
-		//log.SetLevel(log.InfoLevel)
+		log.SetLevel(log.InfoLevel)
 	}
 }
 
@@ -43,24 +42,31 @@ func (cw CSVWorker) subscribe(ctx context.Context, client *pubsub.Client) {
 	err := sub.Receive(cctx, func(ctx context.Context, msg *pubsub.Message) {
 		log.Info("sample received - processing")
 		log.WithField("data", string(msg.Data)).Debug("sample data")
+
+		if msg.DeliveryAttempt != nil {
+			log.WithField("delivery attempts", *msg.DeliveryAttempt).Info("Message delivery attempted")
+		}
+
 		sample := msg.Data
 		attribute := msg.Attributes
 		sampleSummaryId, ok := attribute["sample_summary_id"]
-		if ok  {
+		if ok {
 			log.WithField("sampleSummaryId", sampleSummaryId).Info("about to process sample")
 			err := processSample(sample, sampleSummaryId)
 			if err != nil {
 				log.WithError(err).Error("error processing sample - nacking message")
+				//after x number of nacks message will be DLQ
 				msg.Nack()
 			} else {
 				log.Info("sample processed - acking message")
 				msg.Ack()
 			}
 		} else {
-			log.Error("missing sample summary id - dropping message")
-			//TODO dead letter queue this but for now drop the message
-			msg.Ack()
-
+			log.Error("missing sample summary id - sending to DLQ")
+			err := deadLetter(ctx, client, msg)
+			if err != nil {
+				msg.Nack()
+			}
 		}
 	})
 
@@ -70,8 +76,23 @@ func (cw CSVWorker) subscribe(ctx context.Context, client *pubsub.Client) {
 	}
 }
 
+// send message to DLQ immediately
+func deadLetter(ctx context.Context, client *pubsub.Client, msg *pubsub.Message) error {
+	//DLQ are always named TOPIC + -dead-letter in our terraform scripts
+	deadLetterTopic := viper.GetString("PUB_SUB_TOPIC") + "-dead-letter"
+	dlq := client.Topic(deadLetterTopic)
+	id, err := dlq.Publish(ctx, msg).Get(ctx)
+	if err != nil {
+		log.WithField("msg", string(msg.Data)).WithError(err).Error("unable to forward to dead letter topic")
+		return err
+	}
+	log.WithField("id", id).Info("published to dead letter topic")
+	return nil
+}
+
 func setDefaults() {
 	viper.SetDefault("PUBSUB_SUB_ID", "sample-workers")
+	viper.SetDefault("PUB_SUB_TOPIC", "sample-jobs")
 	viper.SetDefault("GOOGLE_CLOUD_PROJECT", "rm-ras-sandbox")
 	viper.SetDefault("WORKERS", "10")
 	viper.SetDefault("VERBOSE", true)
@@ -83,12 +104,16 @@ func work() {
 	csvWorker.start()
 }
 
-func main() {
-	log.Info("starting")
+func configure() {
 	//config
 	viper.AutomaticEnv()
 	setDefaults()
 	configureLogging()
+}
+
+func main() {
+	log.Info("starting")
+	configure()
 
 	workers := viper.GetInt("WORKERS")
 	for i := 0; i < workers; i++ {
