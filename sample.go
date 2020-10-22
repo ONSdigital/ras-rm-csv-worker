@@ -6,10 +6,10 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"go.uber.org/zap"
 	"io/ioutil"
 	"net/http"
 
-	log "github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
 )
 
@@ -46,22 +46,22 @@ type Sample struct {
 }
 
 func processSample(line []byte, sampleSummaryId string) error {
-	log.Debug("processing sample")
+	logger.Debug("processing sample")
 	s := parse(line)
 	s.sampleSummaryId = sampleSummaryId
 	return s.sendToSampleService()
 }
 
 func parse(line []byte) *Sample {
-	log.Debug("reading csv line")
+	logger.Debug("reading csv line")
 	r := csv.NewReader(bytes.NewReader(line))
 	r.Comma = ':'
 
 	sample, err := r.Read()
 	if err != nil {
-		log.WithError(err).Fatal("unable to parse sample csv")
+		logger.Fatal("unable to parse sample csv", zap.Error(err))
 	}
-	log.WithField("sample", sample).Debug("read sample")
+	logger.Debug("read sample", zap.Any("sample", sample))
 	sampleUnit := &Sample{
 		SAMPLEUNITREF: sample[0],
 		CHECKLETTER:   sample[1],
@@ -91,7 +91,7 @@ func parse(line []byte) *Sample {
 		FORMTYPE:      sample[25],
 		CURRENCY:      sample[26],
 	}
-	log.WithField("SAMPLEUNITREF", sampleUnit.SAMPLEUNITREF).Debug("sample created")
+	logger.Debug("sample created", zap.String("SAMPLEUNITREF", sampleUnit.SAMPLEUNITREF))
 	return sampleUnit
 }
 
@@ -107,9 +107,9 @@ func (s *Sample) sendToSampleService() error {
 func (s Sample) marshall() ([]byte, error) {
 	//marshall to JSON and send to the sample service as a POST request
 	payload, err := json.Marshal(s)
-	log.WithField("payload", string(payload)).Debug("marshalled sample to json")
+	logger.Debug("marshalled sample to json", zap.String("payload", string(payload)))
 	if err != nil {
-		log.WithError(err).Error("unable to marshall sample to json")
+		logger.Error("unable to marshall sample to json", zap.Error(err))
 		return nil, err
 	}
 	return payload, nil
@@ -119,28 +119,28 @@ func (s Sample) getSampleServiceUrl() string {
 	sampleServiceBaseUrl := viper.GetString("SAMPLE_SERVICE_BASE_URL")
 	sampleServicePath := fmt.Sprintf("/samples/%s/sampleunits/", s.sampleSummaryId)
 	sampleServiceUrl := sampleServiceBaseUrl + sampleServicePath
-	log.WithField("url", sampleServiceUrl).Info("using sample service url")
+	logger.Info("using sample service url", zap.String("url", sampleServiceUrl))
 	return sampleServiceUrl
 }
 
 func (s Sample) sendHttpRequest(url string, payload []byte) error {
 	resp, err := http.Post(url, "application/json", bytes.NewReader(payload))
 	if err != nil {
-		log.WithError(err).Error("error sending HTTP request")
+		logger.Error("error sending HTTP request", zap.Error(err))
 		return err
 	}
 	defer resp.Body.Close()
 	body, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
-		log.WithError(err).Error("error reading HTTP response")
+		logger.Error("error reading HTTP response", zap.Error(err))
 		return err
 	}
-	log.WithField("body", string(body)).Debug("response received")
+	logger.Debug("response received", zap.String("body", string(body)))
 	if resp.StatusCode == http.StatusCreated {
-		log.Info("sample created")
+		logger.Info("sample created")
 		return nil
 	} else {
-		log.WithField("status code", resp.StatusCode).Error("sample not created status")
+		logger.Error("sample not created status", zap.Int("status code", resp.StatusCode))
 		return errors.New(fmt.Sprintf("sample not created - status code %d", resp.StatusCode))
 	}
 }
