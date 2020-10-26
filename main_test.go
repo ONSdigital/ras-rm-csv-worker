@@ -42,6 +42,7 @@ func TestMain(m *testing.M) {
 
 func TestSubscribe(t *testing.T) {
 	assert := assert.New(t)
+	configure()
 
 	topic, err := createTopic(assert)
 	defer topic.Delete(ctx)

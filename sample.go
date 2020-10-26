@@ -61,7 +61,7 @@ func parse(line []byte) *Sample {
 	if err != nil {
 		logger.Fatal("unable to parse sample csv", zap.Error(err))
 	}
-	logger.Debug("read sample", zap.Any("sample", sample))
+	logger.Debug("read sample", zap.Strings("sample", sample))
 	sampleUnit := &Sample{
 		SAMPLEUNITREF: sample[0],
 		CHECKLETTER:   sample[1],
@@ -107,7 +107,7 @@ func (s *Sample) sendToSampleService() error {
 func (s Sample) marshall() ([]byte, error) {
 	//marshall to JSON and send to the sample service as a POST request
 	payload, err := json.Marshal(s)
-	logger.Debug("marshalled sample to json", zap.String("payload", string(payload)))
+	logger.Debug("marshalled sample to json", zap.ByteString("payload", payload))
 	if err != nil {
 		logger.Error("unable to marshall sample to json", zap.Error(err))
 		return nil, err
@@ -135,7 +135,7 @@ func (s Sample) sendHttpRequest(url string, payload []byte) error {
 		logger.Error("error reading HTTP response", zap.Error(err))
 		return err
 	}
-	logger.Debug("response received", zap.String("body", string(body)))
+	logger.Debug("response received", zap.ByteString("body", body))
 	if resp.StatusCode == http.StatusCreated {
 		logger.Info("sample created")
 		return nil
