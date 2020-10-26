@@ -15,14 +15,21 @@ var logger *zap.Logger
 type CSVWorker struct{}
 
 func configureLogging() {
+	var err error
 	verbose := viper.GetBool("VERBOSE")
 
 	if verbose {
 		config := zapdriver.NewProductionConfig()
 		config.Level = zap.NewAtomicLevelAt(zap.DebugLevel)
-		logger, _ = config.Build()
+		logger, err = config.Build()
+		if err != nil {
+			panic(err)
+		}
 	} else {
-		logger, _ = zapdriver.NewProduction()
+		logger, err = zapdriver.NewProduction()
+		if err != nil {
+			panic(err)
+		}
 	}
 }
 
