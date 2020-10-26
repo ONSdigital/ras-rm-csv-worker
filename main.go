@@ -126,8 +126,8 @@ func configure() {
 }
 
 func main() {
-	logger.Info("starting")
 	configure()
+	logger.Info("starting")
 
 	workers := viper.GetInt("WORKERS")
 	for i := 0; i < workers; i++ {
