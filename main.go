@@ -26,7 +26,6 @@ func configureLogging() {
 	}
 }
 
-
 func (cw CSVWorker) start() {
 	logger.Debug("starting worker process")
 	ctx := context.Background()
@@ -135,7 +134,6 @@ func main() {
 		logger.Info("kill signal received", zap.Any("signal", signal))
 		done <- true
 	}()
-
 
 	logger.Info("started")
 	<-done
