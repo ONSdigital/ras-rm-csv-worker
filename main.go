@@ -3,66 +3,78 @@ package main
 import (
 	"cloud.google.com/go/pubsub"
 	"context"
-	log "github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
 	"os"
+
+	"github.com/blendle/zapdriver"
+	"go.uber.org/zap"
 )
+
+var logger *zap.Logger
 
 type CSVWorker struct{}
 
 func configureLogging() {
+	var err error
 	verbose := viper.GetBool("VERBOSE")
+
 	if verbose {
-		//anything debug and above
-		log.SetLevel(log.DebugLevel)
+		config := zapdriver.NewProductionConfig()
+		config.Level = zap.NewAtomicLevelAt(zap.DebugLevel)
+		logger, err = config.Build()
+		if err != nil {
+			panic(err)
+		}
 	} else {
-		//otherwise keep it to info
-		log.SetLevel(log.InfoLevel)
+		logger, err = zapdriver.NewProduction()
+		if err != nil {
+			panic(err)
+		}
 	}
 }
 
 func (cw CSVWorker) start() {
-	log.Debug("starting worker process")
+	logger.Debug("starting worker process")
 	ctx := context.Background()
 	client, err := pubsub.NewClient(ctx, viper.GetString("GOOGLE_CLOUD_PROJECT"))
 	if err != nil {
-		log.Fatal(err)
+		logger.Fatal("failed to create client", zap.Error(err))
 	}
 	defer client.Close()
-	log.Debug("about to subscribe")
+	logger.Debug("about to subscribe")
 	cw.subscribe(ctx, client)
 }
 
 func (cw CSVWorker) subscribe(ctx context.Context, client *pubsub.Client) {
 	subId := viper.GetString("PUBSUB_SUB_ID")
-	log.WithField("subId", subId).Info("subscribing to subscription")
+	logger.Info("subscribing to subscription", zap.String("subId", subId))
 	sub := client.Subscription(subId)
 	cctx, cancel := context.WithCancel(ctx)
-	log.Debug("waiting to receive")
+	logger.Debug("waiting to receive")
 	err := sub.Receive(cctx, func(ctx context.Context, msg *pubsub.Message) {
-		log.Info("sample received - processing")
-		log.WithField("data", string(msg.Data)).Debug("sample data")
+		logger.Info("sample received - processing")
+		logger.Debug("sample data", zap.String("data", string(msg.Data)))
 
 		if msg.DeliveryAttempt != nil {
-			log.WithField("delivery attempts", *msg.DeliveryAttempt).Info("Message delivery attempted")
+			logger.Info("Message delivery attempted", zap.Int("delivery attempts", *msg.DeliveryAttempt))
 		}
 
 		sample := msg.Data
 		attribute := msg.Attributes
 		sampleSummaryId, ok := attribute["sample_summary_id"]
 		if ok {
-			log.WithField("sampleSummaryId", sampleSummaryId).Info("about to process sample")
+			logger.Info("about to process sample", zap.String("sampleSummaryId", sampleSummaryId))
 			err := processSample(sample, sampleSummaryId)
 			if err != nil {
-				log.WithError(err).Error("error processing sample - nacking message")
+				logger.Error("error processing sample - nacking message", zap.Error(err))
 				//after x number of nacks message will be DLQ
 				msg.Nack()
 			} else {
-				log.Info("sample processed - acking message")
+				logger.Info("sample processed - acking message")
 				msg.Ack()
 			}
 		} else {
-			log.Error("missing sample summary id - sending to DLQ")
+			logger.Error("missing sample summary id - sending to DLQ")
 			err := deadLetter(ctx, client, msg)
 			if err != nil {
 				msg.Nack()
@@ -71,7 +83,7 @@ func (cw CSVWorker) subscribe(ctx context.Context, client *pubsub.Client) {
 	})
 
 	if err != nil {
-		log.WithError(err).Error("error subscribing")
+		logger.Error("error subscribing")
 		cancel()
 	}
 }
@@ -83,10 +95,12 @@ func deadLetter(ctx context.Context, client *pubsub.Client, msg *pubsub.Message)
 	dlq := client.Topic(deadLetterTopic)
 	id, err := dlq.Publish(ctx, msg).Get(ctx)
 	if err != nil {
-		log.WithField("msg", string(msg.Data)).WithError(err).Error("unable to forward to dead letter topic")
+		logger.Error("unable to forward to dead letter topic",
+			zap.String("msg", string(msg.Data)),
+			zap.Error(err))
 		return err
 	}
-	log.WithField("id", id).Info("published to dead letter topic")
+	logger.Info("published to dead letter topic", zap.String("id", id))
 	return nil
 }
 
@@ -112,8 +126,8 @@ func configure() {
 }
 
 func main() {
-	log.Info("starting")
 	configure()
+	logger.Info("starting")
 
 	workers := viper.GetInt("WORKERS")
 	for i := 0; i < workers; i++ {
@@ -124,11 +138,11 @@ func main() {
 	done := make(chan bool, 1)
 	go func() {
 		signal := <-signals
-		log.WithField("signal", signal).Info("kill signal received")
+		logger.Info("kill signal received", zap.Any("signal", signal))
 		done <- true
 	}()
 
-	log.Info("started")
+	logger.Info("started")
 	<-done
-	log.Info("exiting")
+	logger.Info("exiting")
 }
