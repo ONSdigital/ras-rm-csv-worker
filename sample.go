@@ -139,6 +139,9 @@ func (s Sample) sendHttpRequest(url string, payload []byte) error {
 	if resp.StatusCode == http.StatusCreated {
 		logger.Info("sample created")
 		return nil
+	} else if resp.StatusCode == http.StatusConflict {
+		logger.Error("attempted to create duplicate sample", zap.Int("status code", resp.StatusCode))
+		return errors.New(fmt.Sprintf("sample not created - status code %d", resp.StatusCode))
 	} else {
 		logger.Error("sample not created status", zap.Int("status code", resp.StatusCode))
 		return errors.New(fmt.Sprintf("sample not created - status code %d", resp.StatusCode))
