@@ -21,6 +21,8 @@ func configureLogging() {
 	if verbose {
 		config := zapdriver.NewProductionConfig()
 		config.Level = zap.NewAtomicLevelAt(zap.DebugLevel)
+		// disable sampling to ensure we get all log messages
+		config.Sampling = nil
 		logger, err = config.Build()
 		if err != nil {
 			panic(err)
