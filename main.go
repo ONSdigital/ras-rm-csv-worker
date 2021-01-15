@@ -52,7 +52,7 @@ func (cw CSVWorker) subscribe(ctx context.Context, client *pubsub.Client) {
 	cctx, cancel := context.WithCancel(ctx)
 	logger.Debug("waiting to receive")
 	err := sub.Receive(cctx, func(ctx context.Context, msg *pubsub.Message) {
-		logger.Info("sample received - processing")
+		logger.Info("sample received - processing", zap.String("messageId", msg.ID))
 		logger.Debug("sample data", zap.String("data", string(msg.Data)))
 
 		if msg.DeliveryAttempt != nil {
