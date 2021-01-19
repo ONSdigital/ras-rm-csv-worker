@@ -66,7 +66,7 @@ func (cw CSVWorker) subscribe(ctx context.Context, client *pubsub.Client) {
 		sampleSummaryId, ok := attribute["sample_summary_id"]
 		if ok {
 			logger.Info("about to process sample", zap.String("sampleSummaryId", sampleSummaryId))
-			err := processSample(sample, sampleSummaryId)
+			err := processSample(sample, sampleSummaryId, msg)
 			if err != nil {
 				logger.Error("error processing sample - nacking message", zap.Error(err))
 				//after x number of nacks message will be DLQ

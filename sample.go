@@ -2,6 +2,7 @@ package main
 
 import (
 	"bytes"
+	"cloud.google.com/go/pubsub"
 	"encoding/csv"
 	"encoding/json"
 	"errors"
@@ -42,13 +43,15 @@ type Sample struct {
 	FORMTYPE      string `json:"formType"`
 	CURRENCY      string `json:"currency"`
 
-	sampleSummaryId string `json:"-"`
+	sampleSummaryId string          `json:"-"`
+	msg             *pubsub.Message `json:"-"`
 }
 
-func processSample(line []byte, sampleSummaryId string) error {
+func processSample(line []byte, sampleSummaryId string, msg *pubsub.Message) error {
 	logger.Debug("processing sample")
 	s := parse(line)
 	s.sampleSummaryId = sampleSummaryId
+	s.msg = msg
 	return s.sendToSampleService()
 }
 
@@ -137,13 +140,14 @@ func (s Sample) sendHttpRequest(url string, payload []byte) error {
 	}
 	logger.Debug("response received", zap.ByteString("body", body))
 	if resp.StatusCode == http.StatusCreated {
-		logger.Info("sample created")
+		logger.Info("sample created", zap.String("sampleUnitRef", s.SAMPLEUNITREF), zap.String("messageId", s.msg.ID))
 		return nil
 	} else if resp.StatusCode == http.StatusConflict {
-		logger.Error("attempted to create duplicate sample", zap.Int("status code", resp.StatusCode))
-		return errors.New(fmt.Sprintf("sample not created - status code %d", resp.StatusCode))
+		logger.Warn("attempted to create duplicate sample", zap.Int("status code", resp.StatusCode), zap.String("sampleUnitRef", s.SAMPLEUNITREF), zap.String("messageId", s.msg.ID))
+		// if this sample unit has already been created ack the message to stop it being recreated
+		return nil
 	} else {
-		logger.Error("sample not created status", zap.Int("status code", resp.StatusCode))
+		logger.Error("sample not created status", zap.Int("status code", resp.StatusCode), zap.String("sampleUnitRef", s.SAMPLEUNITREF), zap.String("messageId", s.msg.ID))
 		return errors.New(fmt.Sprintf("sample not created - status code %d", resp.StatusCode))
 	}
 }
