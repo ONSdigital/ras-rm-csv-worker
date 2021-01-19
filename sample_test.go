@@ -1,6 +1,7 @@
 package main
 
 import (
+	"cloud.google.com/go/pubsub"
 	"fmt"
 	"io/ioutil"
 	"net/http"
@@ -24,7 +25,16 @@ func TestSampleSuccess(t *testing.T) {
 	viper.Set("SAMPLE_SERVICE_BASE_URL", ts.URL)
 
 	sample := []byte("13110000001:::::::::::WW:::::OFFICE FOR NATIONAL STATISTICS:::::::::0001:")
-	err := processSample(sample, "test")
+
+	msg := &pubsub.Message{
+		Data: []byte(sample),
+		Attributes: map[string]string{
+			"sample_summary_id": "test",
+		},
+		ID: "1",
+	}
+
+	err := processSample(sample, "test", msg)
 	assert.Nil(err, "error should be nil")
 }
 
@@ -41,12 +51,29 @@ func TestSampleError(t *testing.T) {
 	viper.Set("SAMPLE_SERVICE_BASE_URL", ts.URL)
 
 	sample := []byte("13110000001:::::::::::WW:::::OFFICE FOR NATIONAL STATISTICS:::::::::0001:")
-	err := processSample(sample, "test")
+
+	msg := &pubsub.Message{
+		Data: []byte(sample),
+		Attributes: map[string]string{
+			"sample_summary_id": "test",
+		},
+		ID: "1",
+	}
+
+	err := processSample(sample, "test", msg)
 	assert.NotNil(t, err, "error should not be nil")
 }
 
 func TestSampleServerURL(t *testing.T) {
 	s := &Sample{}
+	s.msg = &pubsub.Message{
+		Data: []byte(sample),
+		Attributes: map[string]string{
+			"sample_summary_id": "test",
+		},
+		ID: "1",
+	}
+
 	assert := assert.New(t)
 	// set env variables and check url is correct
 	viper.Set("SAMPLE_SERVICE_BASE_URL", "https://127.0.0.1")
@@ -56,6 +83,13 @@ func TestSampleServerURL(t *testing.T) {
 
 func TestSendHttpRequest(t *testing.T) {
 	s := &Sample{}
+	s.msg = &pubsub.Message{
+		Data: []byte(sample),
+		Attributes: map[string]string{
+			"sample_summary_id": "test",
+		},
+		ID: "1",
+	}
 	assert := assert.New(t)
 	payload := []byte("TEST")
 
@@ -74,6 +108,13 @@ func TestSendHttpRequest(t *testing.T) {
 
 func TestSendHttpRequestBadUrl(t *testing.T) {
 	s := &Sample{}
+	s.msg = &pubsub.Message{
+		Data: []byte(sample),
+		Attributes: map[string]string{
+			"sample_summary_id": "test",
+		},
+		ID: "1",
+	}
 	assert := assert.New(t)
 	payload := []byte("TEST")
 	err := s.sendHttpRequest("http://localhost", payload)
@@ -82,6 +123,13 @@ func TestSendHttpRequestBadUrl(t *testing.T) {
 
 func TestSendHttpRequestWrongStatus(t *testing.T) {
 	s := &Sample{}
+	s.msg = &pubsub.Message{
+		Data: []byte(sample),
+		Attributes: map[string]string{
+			"sample_summary_id": "test",
+		},
+		ID: "1",
+	}
 	assert := assert.New(t)
 	payload := []byte("TEST")
 
@@ -192,6 +240,13 @@ func createSample() *Sample {
 	s.TRADSTYLE1 = "trad1"
 	s.TRADSTYLE2 = "trad2"
 	s.TRADSTYLE3 = "trad3"
+	s.msg = &pubsub.Message{
+		Data: []byte(sample),
+		Attributes: map[string]string{
+			"sample_summary_id": "test",
+		},
+		ID: "1",
+	}
 	return s
 }
 

@@ -77,6 +77,7 @@ func TestSubscribe(t *testing.T) {
 		Attributes: map[string]string{
 			"sample_summary_id": "test",
 		},
+		ID: "1",
 	}
 
 	id, err := topic.Publish(ctx, msg).Get(ctx)
@@ -176,6 +177,7 @@ func TestDeadletterAsSampleSummaryIdMissing(t *testing.T) {
 
 	msg := &pubsub.Message{
 		Data: []byte(sample),
+		ID:   "1",
 	}
 
 	id, err := topic.Publish(ctx, msg).Get(ctx)
