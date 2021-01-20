@@ -3,10 +3,8 @@ package main
 import (
 	"cloud.google.com/go/pubsub"
 	"context"
-	"github.com/spf13/viper"
-	"os"
-
 	"github.com/blendle/zapdriver"
+	"github.com/spf13/viper"
 	"go.uber.org/zap"
 )
 
@@ -110,13 +108,13 @@ func setDefaults() {
 	viper.SetDefault("PUBSUB_SUB_ID", "sample-workers")
 	viper.SetDefault("PUB_SUB_TOPIC", "sample-jobs")
 	viper.SetDefault("GOOGLE_CLOUD_PROJECT", "rm-ras-sandbox")
-	viper.SetDefault("WORKERS", "10")
 	viper.SetDefault("VERBOSE", true)
 	viper.SetDefault("SAMPLE_SERVICE_BASE_URL", "http://localhost:8080")
 }
 
 func work() {
 	csvWorker := &CSVWorker{}
+	logger.Info("started")
 	csvWorker.start()
 }
 
@@ -130,21 +128,6 @@ func configure() {
 func main() {
 	configure()
 	logger.Info("starting")
-
-	workers := viper.GetInt("WORKERS")
-	for i := 0; i < workers; i++ {
-		go work()
-	}
-
-	signals := make(chan os.Signal, 1)
-	done := make(chan bool, 1)
-	go func() {
-		signal := <-signals
-		logger.Info("kill signal received", zap.Any("signal", signal))
-		done <- true
-	}()
-
-	logger.Info("started")
-	<-done
+	work()
 	logger.Info("exiting")
 }
