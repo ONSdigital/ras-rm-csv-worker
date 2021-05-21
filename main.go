@@ -118,6 +118,8 @@ func setDefaults() {
 	viper.SetDefault("VERBOSE", true)
 	viper.SetDefault("SAMPLE_SERVICE_BASE_URL", "http://localhost:8080")
 	viper.SetDefault("PARTY_SERVICE_BASE_URL", "http://localhost:8080")
+	viper.SetDefault("SECURITY_USER_NAME", "admin")
+	viper.SetDefault("SECURITY_USER_PASSWORD", "secret")
 }
 
 func work() {

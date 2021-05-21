@@ -57,5 +57,15 @@ spec:
             value: /var/secrets/google/credentials.json
           - name: GOOGLE_CLOUD_PROJECT
             value: {{ .Values.gcp.project }}
+          - name: SECURITY_USER_NAME
+            valueFrom:
+              secretKeyRef:
+                name: security-credentials
+                key: security-user
+          - name: SECURITY_USER_PASSWORD
+            valueFrom:
+              secretKeyRef:
+                name: security-credentials
+                key: security-password
           resources:
             {{ toYaml .Values.resources | nindent 12 }}
