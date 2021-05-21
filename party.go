@@ -105,6 +105,7 @@ func newParty(line []byte, sampleSummaryId string, sampleUnitId string) *Party {
 	party := &Party{
 		SAMPLEUNITREF: sample[0],
 		SAMPLESUMMARYID: sampleSummaryId,
+		SAMPLEUNITTYPE: "B",
 		attributes: *attr,
 
 	}
