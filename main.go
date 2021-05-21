@@ -64,12 +64,19 @@ func (cw CSVWorker) subscribe(ctx context.Context, client *pubsub.Client) {
 		sampleSummaryId, ok := attribute["sample_summary_id"]
 		if ok {
 			logger.Info("about to process sample", zap.String("sampleSummaryId", sampleSummaryId))
-			err := processSample(sample, sampleSummaryId, msg)
+			sampleUnitId, err := processSample(sample, sampleSummaryId, msg)
 			if err != nil {
 				logger.Error("error processing sample - nacking message", zap.Error(err))
 				//after x number of nacks message will be DLQ
 				msg.Nack()
 			} else {
+				//now the sample has been create, lets create the associated party
+				err := processParty(sample, sampleSummaryId, sampleUnitId, msg)
+				if err != nil {
+					logger.Error("error processing party - nacking message", zap.Error(err))
+					//after x number of nacks message will be DLQ
+					msg.Nack()
+				}
 				logger.Info("sample processed - acking message")
 				msg.Ack()
 			}
@@ -110,6 +117,7 @@ func setDefaults() {
 	viper.SetDefault("GOOGLE_CLOUD_PROJECT", "rm-ras-sandbox")
 	viper.SetDefault("VERBOSE", true)
 	viper.SetDefault("SAMPLE_SERVICE_BASE_URL", "http://localhost:8080")
+	viper.SetDefault("PARTY_SERVICE_BASE_URL", "http://localhost:8080")
 }
 
 func work() {

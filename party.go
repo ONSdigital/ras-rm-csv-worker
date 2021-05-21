@@ -5,17 +5,24 @@ import (
 	"cloud.google.com/go/pubsub"
 	"encoding/csv"
 	"encoding/json"
-	"errors"
-	"fmt"
+	"github.com/spf13/viper"
 	"go.uber.org/zap"
 	"io/ioutil"
 	"net/http"
-
-	"github.com/spf13/viper"
+	"fmt"
+	"errors"
 )
 
-type Sample struct {
+type Party struct {
 	SAMPLEUNITREF string `json:"sampleUnitRef"`
+	SAMPLESUMMARYID string `json:"sampleSummaryId"`
+	SAMPLEUNITTYPE string `json:sampleUnitType`
+	attributes Attributes `json:attributes`
+
+	msg             *pubsub.Message `json:"-"`
+}
+
+type Attributes struct {
 	CHECKLETTER   string `json:"checkletter"`
 	FROSIC92      string `json:"frosic92"`
 	RUSIC92       string `json:"rusic92"`
@@ -25,6 +32,7 @@ type Sample struct {
 	FROTOVER      string `json:"frotover"`
 	ENTREF        string `json:"entref"`
 	LEGALSTATUS   string `json:"legalstatus"`
+	NAME		  string `json:"name"`
 	ENTREPMKR     string `json:"entrepmkr"`
 	REGION        string `json:"region"`
 	BIRTHDATE     string `json:"birthdate"`
@@ -42,20 +50,18 @@ type Sample struct {
 	CELLNO        string `json:"cellNo"`
 	FORMTYPE      string `json:"formType"`
 	CURRENCY      string `json:"currency"`
+	SAMPLEUNITID  string `json:"sampleUnitRef"`
 
-	sampleSummaryId string          `json:"-"`
-	msg             *pubsub.Message `json:"-"`
 }
 
-func processSample(line []byte, sampleSummaryId string, msg *pubsub.Message) (string, error) {
-	logger.Debug("processing sample")
-	s := parse(line)
-	s.sampleSummaryId = sampleSummaryId
-	s.msg = msg
-	return s.sendToSampleService()
+func processParty(line []byte, sampleSummaryId string, sampleUnitId string, msg *pubsub.Message) error {
+	logger.Debug("processing party")
+	p := newParty(line, sampleSummaryId, sampleUnitId)
+	p.msg = msg
+	return p.sendToPartyService()
 }
 
-func parse(line []byte) *Sample {
+func newParty(line []byte, sampleSummaryId string, sampleUnitId string) *Party {
 	logger.Debug("reading csv line")
 	r := csv.NewReader(bytes.NewReader(line))
 	r.Comma = ':'
@@ -65,8 +71,8 @@ func parse(line []byte) *Sample {
 		logger.Fatal("unable to parse sample csv", zap.Error(err))
 	}
 	logger.Debug("read sample", zap.Strings("sample", sample))
-	sampleUnit := &Sample{
-		SAMPLEUNITREF: sample[0],
+
+	attr := &Attributes{
 		CHECKLETTER:   sample[1],
 		FROSIC92:      sample[2],
 		RUSIC92:       sample[3],
@@ -76,6 +82,7 @@ func parse(line []byte) *Sample {
 		FROTOVER:      sample[7],
 		ENTREF:        sample[8],
 		LEGALSTATUS:   sample[9],
+		NAME:		   "None",
 		ENTREPMKR:     sample[10],
 		REGION:        sample[11],
 		BIRTHDATE:     sample[12],
@@ -93,23 +100,30 @@ func parse(line []byte) *Sample {
 		CELLNO:        sample[24],
 		FORMTYPE:      sample[25],
 		CURRENCY:      sample[26],
+		SAMPLEUNITID:  sampleUnitId,
 	}
-	logger.Debug("sample created", zap.String("SAMPLEUNITREF", sampleUnit.SAMPLEUNITREF))
-	return sampleUnit
+	party := &Party{
+		SAMPLEUNITREF: sample[0],
+		SAMPLESUMMARYID: sampleSummaryId,
+		attributes: *attr,
+
+	}
+	logger.Debug("party created", zap.String("SAMPLEUNITREF", party.SAMPLEUNITREF))
+	return party
 }
 
-func (s *Sample) sendToSampleService() (string, error) {
-	payload, err := s.marshall()
+func (p *Party) sendToPartyService() error {
+	payload, err := p.marshall()
 	if err != nil {
-		return "", err
+		return err
 	}
-	sampleServiceUrl := s.getSampleServiceUrl()
-	return s.sendHttpRequest(sampleServiceUrl, payload)
+	sampleServiceUrl := p.getPartyServiceUrl()
+	return p.sendHttpRequest(sampleServiceUrl, payload)
 }
 
-func (s Sample) marshall() ([]byte, error) {
+func (p Party) marshall() ([]byte, error) {
 	//marshall to JSON and send to the sample service as a POST request
-	payload, err := json.Marshal(s)
+	payload, err := json.Marshal(p)
 	logger.Debug("marshalled sample to json", zap.ByteString("payload", payload))
 	if err != nil {
 		logger.Error("unable to marshall sample to json", zap.Error(err))
@@ -118,48 +132,36 @@ func (s Sample) marshall() ([]byte, error) {
 	return payload, nil
 }
 
-func (s Sample) getSampleServiceUrl() string {
-	sampleServiceBaseUrl := viper.GetString("SAMPLE_SERVICE_BASE_URL")
-	sampleServicePath := fmt.Sprintf("/samples/%s/sampleunits/", s.sampleSummaryId)
-	sampleServiceUrl := sampleServiceBaseUrl + sampleServicePath
-	logger.Info("using sample service url", zap.String("url", sampleServiceUrl))
-	return sampleServiceUrl
+func (p Party) getPartyServiceUrl() string {
+	partyServiceBaseUrl := viper.GetString("PARTY_SERVICE_BASE_URL")
+	partyServicePath := "/party-api/v1/parties"
+	partyServiceUrl := partyServiceBaseUrl + partyServicePath
+	logger.Info("using sample service url", zap.String("url", partyServiceUrl))
+	return partyServiceUrl
 }
 
-func (s Sample) sendHttpRequest(url string, payload []byte) (string, error) {
+func (p Party) sendHttpRequest(url string, payload []byte) error {
 	resp, err := http.Post(url, "application/json", bytes.NewReader(payload))
 	if err != nil {
 		logger.Error("error sending HTTP request", zap.Error(err))
-		return "", err
+		return err
 	}
 	defer resp.Body.Close()
 	body, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
 		logger.Error("error reading HTTP response", zap.Error(err))
-		return "", err
+		return err
 	}
 	logger.Debug("response received", zap.ByteString("body", body))
 	if resp.StatusCode == http.StatusCreated {
-		logger.Info("sample created", zap.String("sampleUnitRef", s.SAMPLEUNITREF), zap.String("messageId", s.msg.ID))
-		data := make(map[string]interface{})
-		err := json.Unmarshal(body, &data)
-		if err != nil {
-			logger.Error("error decoding JSON response", zap.Error(err))
-		}
-
-		sampleUnitId, ok := data["id"].(string)
-		if !ok {
-			logger.Warn("missing sample unit id")
-			sampleUnitId = ""
-		}
-		return sampleUnitId, nil
-
+		logger.Info("sample created", zap.String("sampleUnitRef", p.SAMPLEUNITREF), zap.String("messageId", p.msg.ID))
+		return nil
 	} else if resp.StatusCode == http.StatusConflict {
-		logger.Warn("attempted to create duplicate sample", zap.Int("status code", resp.StatusCode), zap.String("sampleUnitRef", s.SAMPLEUNITREF), zap.String("messageId", s.msg.ID))
+		logger.Warn("attempted to create duplicate sample", zap.Int("status code", resp.StatusCode), zap.String("sampleUnitRef", p.SAMPLEUNITREF), zap.String("messageId", p.msg.ID))
 		// if this sample unit has already been created ack the message to stop it being recreated
-		return "", nil
+		return nil
 	} else {
-		logger.Error("sample not created status", zap.Int("status code", resp.StatusCode), zap.String("sampleUnitRef", s.SAMPLEUNITREF), zap.String("messageId", s.msg.ID))
-		return "", errors.New(fmt.Sprintf("sample not created - status code %d", resp.StatusCode))
+		logger.Error("sample not created status", zap.Int("status code", resp.StatusCode), zap.String("sampleUnitRef", p.SAMPLEUNITREF), zap.String("messageId", p.msg.ID))
+		return errors.New(fmt.Sprintf("sample not created - status code %d", resp.StatusCode))
 	}
 }

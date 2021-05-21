@@ -34,7 +34,7 @@ func TestSampleSuccess(t *testing.T) {
 		ID: "1",
 	}
 
-	err := processSample(sample, "test", msg)
+	_, err := processSample(sample, "test", msg)
 	assert.Nil(err, "error should be nil")
 }
 
@@ -60,7 +60,7 @@ func TestSampleError(t *testing.T) {
 		ID: "1",
 	}
 
-	err := processSample(sample, "test", msg)
+	_, err := processSample(sample, "test", msg)
 	assert.NotNil(t, err, "error should not be nil")
 }
 
@@ -102,7 +102,7 @@ func TestSendHttpRequest(t *testing.T) {
 	}))
 	ts.Start()
 	defer ts.Close()
-	err := s.sendHttpRequest(ts.URL, payload)
+	_, err := s.sendHttpRequest(ts.URL, payload)
 	assert.Nil(err, "error should be nil")
 }
 
@@ -117,7 +117,7 @@ func TestSendHttpRequestBadUrl(t *testing.T) {
 	}
 	assert := assert.New(t)
 	payload := []byte("TEST")
-	err := s.sendHttpRequest("http://localhost", payload)
+	_, err := s.sendHttpRequest("http://localhost", payload)
 	assert.NotNil(err, "error should be nil")
 }
 
@@ -142,7 +142,7 @@ func TestSendHttpRequestWrongStatus(t *testing.T) {
 	}))
 	ts.Start()
 	defer ts.Close()
-	err := s.sendHttpRequest(ts.URL, payload)
+	_, err := s.sendHttpRequest(ts.URL, payload)
 	assert.NotNil(err, "error should be nil")
 }
 
@@ -158,7 +158,7 @@ func TestSendSampleSuccess(t *testing.T) {
 	viper.Set("SAMPLE_SERVICE_BASE_URL", ts.URL)
 
 	s := createSample()
-	err := s.sendToSampleService()
+	_, err := s.sendToSampleService()
 	assert.Nil(err, "error should be nil")
 }
 
