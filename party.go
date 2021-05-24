@@ -17,7 +17,7 @@ type Party struct {
 	SAMPLEUNITREF string `json:"sampleUnitRef"`
 	SAMPLESUMMARYID string `json:"sampleSummaryId"`
 	SAMPLEUNITTYPE string `json:"sampleUnitType""`
-	attributes *Attributes `json:attributes`
+	attributes *Attributes `json:"attributes""`
 	msg             *pubsub.Message `json:"-"`
 }
 
