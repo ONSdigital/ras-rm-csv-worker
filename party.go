@@ -105,7 +105,7 @@ func newParty(line []byte, sampleSummaryId string, sampleUnitId string) *Party {
 		SAMPLEUNITREF: sample[0],
 		SAMPLESUMMARYID: sampleSummaryId,
 		SAMPLEUNITTYPE: "B",
-		attributes: *attr,
+		Attributes: *attr,
 	}
 	logger.Debug("party created", zap.String("SAMPLEUNITREF", party.SAMPLEUNITREF))
 	return party
