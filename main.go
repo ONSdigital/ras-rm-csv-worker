@@ -77,7 +77,7 @@ func (cw CSVWorker) subscribe(ctx context.Context, client *pubsub.Client) {
 					//after x number of nacks message will be DLQ
 					msg.Nack()
 				}
-				logger.Info("sample processed - acking message")
+				logger.Info("sampel processed - acking message")
 				msg.Ack()
 			}
 		} else {

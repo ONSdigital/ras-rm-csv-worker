@@ -181,7 +181,7 @@ func (p Party) sendHttpRequest(url string, payload []byte) error {
 		return err
 	}
 	logger.Debug("response received", zap.ByteString("body", body))
-	if resp.StatusCode == http.StatusCreated {
+	if resp.StatusCode == http.StatusOK ||  resp.StatusCode == http.StatusCreated  {
 		logger.Info("party created", zap.String("sampleUnitRef", p.SAMPLEUNITREF), zap.String("messageId", p.msg.ID))
 		return nil
 	} else if resp.StatusCode == http.StatusConflict {
