@@ -73,33 +73,33 @@ func newParty(line []byte, sampleSummaryId string, sampleUnitId string) *Party {
 	logger.Debug("read sample", zap.Strings("sample", sample))
 
 	attr := &Attributes{
-		CHECKLETTER:   sample[1],
-		FROSIC92:      sample[2],
-		RUSIC92:       sample[3],
-		FROSIC2007:    sample[4],
-		RUSIC2007:     sample[5],
-		FROEMPMENT:    sample[6],
-		FROTOVER:      sample[7],
-		ENTREF:        sample[8],
-		LEGALSTATUS:   sample[9],
+		CHECKLETTER:   setIfNotEmpty(&sample[1]),
+		FROSIC92:      setIfNotEmpty(&sample[2]),
+		RUSIC92:       setIfNotEmpty(&sample[3]),
+		FROSIC2007:    setIfNotEmpty(&sample[4]),
+		RUSIC2007:     setIfNotEmpty(&sample[5]),
+		FROEMPMENT:    setIfNotEmpty(&sample[6]),
+		FROTOVER:      setIfNotEmpty(&sample[7]),
+		ENTREF:        setIfNotEmpty(&sample[8]),
+		LEGALSTATUS:   setIfNotEmpty(&sample[9]),
 		NAME:		   "",
-		ENTREPMKR:     sample[10],
-		REGION:        sample[11],
-		BIRTHDATE:     sample[12],
-		ENTNAME1:      sample[13],
-		ENTNAME2:      sample[14],
-		ENTNAME3:      sample[15],
-		RUNAME1:       sample[16],
-		RUNAME2:       sample[17],
-		RUNAME3:       sample[18],
-		TRADSTYLE1:    sample[19],
-		TRADSTYLE2:    sample[20],
-		TRADSTYLE3:    sample[21],
-		SELTYPE:       sample[22],
-		INCLEXCL:      sample[23],
-		CELLNO:        sample[24],
-		FORMTYPE:      sample[25],
-		CURRENCY:      sample[26],
+		ENTREPMKR:     setIfNotEmpty(&sample[10]),
+		REGION:        setIfNotEmpty(&sample[11]),
+		BIRTHDATE:     setIfNotEmpty(&sample[12]),
+		ENTNAME1:      setIfNotEmpty(&sample[13]),
+		ENTNAME2:      setIfNotEmpty(&sample[14]),
+		ENTNAME3:      setIfNotEmpty(&sample[15]),
+		RUNAME1:       setIfNotEmpty(&sample[16]),
+		RUNAME2:       setIfNotEmpty(&sample[17]),
+		RUNAME3:       setIfNotEmpty(&sample[18]),
+		TRADSTYLE1:    setIfNotEmpty(&sample[19]),
+		TRADSTYLE2:    setIfNotEmpty(&sample[20]),
+		TRADSTYLE3:    setIfNotEmpty(&sample[21]),
+		SELTYPE:       setIfNotEmpty(&sample[22]),
+		INCLEXCL:      setIfNotEmpty(&sample[23]),
+		CELLNO:        setIfNotEmpty(&sample[24]),
+		FORMTYPE:      setIfNotEmpty(&sample[25]),
+		CURRENCY:      setIfNotEmpty(&sample[26]),
 		SAMPLEUNITID:  sampleUnitId,
 	}
 	party := &Party{
@@ -111,6 +111,14 @@ func newParty(line []byte, sampleSummaryId string, sampleUnitId string) *Party {
 	}
 	logger.Debug("party created", zap.String("SAMPLEUNITREF", party.SAMPLEUNITREF))
 	return party
+}
+
+func setIfNotEmpty(value *string) string {
+	if value == nil {
+		return ""
+	} else {
+		return *value
+	}
 }
 
 func (p *Party) sendToPartyService() error {
