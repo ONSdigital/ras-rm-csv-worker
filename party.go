@@ -17,8 +17,7 @@ type Party struct {
 	SAMPLEUNITREF string `json:"sampleUnitRef"`
 	SAMPLESUMMARYID string `json:"sampleSummaryId"`
 	SAMPLEUNITTYPE string `json:"sampleUnitType""`
-	attributes Attributes `json:attributes`
-
+	attributes *Attributes `json:attributes`
 	msg             *pubsub.Message `json:"-"`
 }
 
@@ -106,8 +105,7 @@ func newParty(line []byte, sampleSummaryId string, sampleUnitId string) *Party {
 		SAMPLEUNITREF: sample[0],
 		SAMPLESUMMARYID: sampleSummaryId,
 		SAMPLEUNITTYPE: "B",
-		attributes: *attr,
-
+		attributes: attr,
 	}
 	logger.Debug("party created", zap.String("SAMPLEUNITREF", party.SAMPLEUNITREF))
 	return party
