@@ -24,16 +24,16 @@ func TestSampleSuccess(t *testing.T) {
 	fmt.Printf("Setting sample service base url %v", ts.URL)
 	viper.Set("SAMPLE_SERVICE_BASE_URL", ts.URL)
 
-	sample := []byte("13110000001:::::::::::WW:::::OFFICE FOR NATIONAL STATISTICS:::::::::0001:")
+	line := []byte("13110000001:::::::::::WW:::::OFFICE FOR NATIONAL STATISTICS:::::::::0001:")
 
 	msg := &pubsub.Message{
-		Data: []byte(sample),
+		Data: []byte(line),
 		Attributes: map[string]string{
 			"sample_summary_id": "test",
 		},
 		ID: "1",
 	}
-
+	sample := readSampleLine(line)
 	_, err := processSample(sample, "test", msg)
 	assert.Nil(err, "error should be nil")
 }
@@ -50,16 +50,17 @@ func TestSampleError(t *testing.T) {
 	fmt.Printf("Setting sample service base url %v", ts.URL)
 	viper.Set("SAMPLE_SERVICE_BASE_URL", ts.URL)
 
-	sample := []byte("13110000001:::::::::::WW:::::OFFICE FOR NATIONAL STATISTICS:::::::::0001:")
+	line := []byte("13110000001:::::::::::WW:::::OFFICE FOR NATIONAL STATISTICS:::::::::0001:")
 
 	msg := &pubsub.Message{
-		Data: []byte(sample),
+		Data: []byte(line),
 		Attributes: map[string]string{
 			"sample_summary_id": "test",
 		},
 		ID: "1",
 	}
 
+	sample := readSampleLine(line)
 	_, err := processSample(sample, "test", msg)
 	assert.NotNil(t, err, "error should not be nil")
 }
@@ -67,7 +68,7 @@ func TestSampleError(t *testing.T) {
 func TestSampleServerURL(t *testing.T) {
 	s := &Sample{}
 	s.msg = &pubsub.Message{
-		Data: []byte(sample),
+		Data: []byte(line),
 		Attributes: map[string]string{
 			"sample_summary_id": "test",
 		},
@@ -84,7 +85,7 @@ func TestSampleServerURL(t *testing.T) {
 func TestSendHttpRequest(t *testing.T) {
 	s := &Sample{}
 	s.msg = &pubsub.Message{
-		Data: []byte(sample),
+		Data: []byte(line),
 		Attributes: map[string]string{
 			"sample_summary_id": "test",
 		},
@@ -109,7 +110,7 @@ func TestSendHttpRequest(t *testing.T) {
 func TestSendHttpRequestBadUrl(t *testing.T) {
 	s := &Sample{}
 	s.msg = &pubsub.Message{
-		Data: []byte(sample),
+		Data: []byte(line),
 		Attributes: map[string]string{
 			"sample_summary_id": "test",
 		},
@@ -124,7 +125,7 @@ func TestSendHttpRequestBadUrl(t *testing.T) {
 func TestSendHttpRequestWrongStatus(t *testing.T) {
 	s := &Sample{}
 	s.msg = &pubsub.Message{
-		Data: []byte(sample),
+		Data: []byte(line),
 		Attributes: map[string]string{
 			"sample_summary_id": "test",
 		},
@@ -241,7 +242,7 @@ func createSample() *Sample {
 	s.TRADSTYLE2 = "trad2"
 	s.TRADSTYLE3 = "trad3"
 	s.msg = &pubsub.Message{
-		Data: []byte(sample),
+		Data: []byte(line),
 		Attributes: map[string]string{
 			"sample_summary_id": "test",
 		},

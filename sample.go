@@ -3,7 +3,6 @@ package main
 import (
 	"bytes"
 	"cloud.google.com/go/pubsub"
-	"encoding/csv"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -47,52 +46,43 @@ type Sample struct {
 	msg             *pubsub.Message `json:"-"`
 }
 
-func processSample(line []byte, sampleSummaryId string, msg *pubsub.Message) (string, error) {
+func processSample(line []string, sampleSummaryId string, msg *pubsub.Message) (string, error) {
 	logger.Debug("processing sample")
-	s := parse(line)
+	s := create(line)
 	s.sampleSummaryId = sampleSummaryId
 	s.msg = msg
 	return s.sendToSampleService()
 }
 
-func parse(line []byte) *Sample {
-	logger.Debug("reading csv line")
-	r := csv.NewReader(bytes.NewReader(line))
-	r.Comma = ':'
-
-	sample, err := r.Read()
-	if err != nil {
-		logger.Fatal("unable to parse sample csv", zap.Error(err))
-	}
-	logger.Debug("read sample", zap.Strings("sample", sample))
+func create(line []string) *Sample {
 	sampleUnit := &Sample{
-		SAMPLEUNITREF: sample[0],
-		CHECKLETTER:   sample[1],
-		FROSIC92:      sample[2],
-		RUSIC92:       sample[3],
-		FROSIC2007:    sample[4],
-		RUSIC2007:     sample[5],
-		FROEMPMENT:    sample[6],
-		FROTOVER:      sample[7],
-		ENTREF:        sample[8],
-		LEGALSTATUS:   sample[9],
-		ENTREPMKR:     sample[10],
-		REGION:        sample[11],
-		BIRTHDATE:     sample[12],
-		ENTNAME1:      sample[13],
-		ENTNAME2:      sample[14],
-		ENTNAME3:      sample[15],
-		RUNAME1:       sample[16],
-		RUNAME2:       sample[17],
-		RUNAME3:       sample[18],
-		TRADSTYLE1:    sample[19],
-		TRADSTYLE2:    sample[20],
-		TRADSTYLE3:    sample[21],
-		SELTYPE:       sample[22],
-		INCLEXCL:      sample[23],
-		CELLNO:        sample[24],
-		FORMTYPE:      sample[25],
-		CURRENCY:      sample[26],
+		SAMPLEUNITREF: line[0],
+		CHECKLETTER:   line[1],
+		FROSIC92:      line[2],
+		RUSIC92:       line[3],
+		FROSIC2007:    line[4],
+		RUSIC2007:     line[5],
+		FROEMPMENT:    line[6],
+		FROTOVER:      line[7],
+		ENTREF:        line[8],
+		LEGALSTATUS:   line[9],
+		ENTREPMKR:     line[10],
+		REGION:        line[11],
+		BIRTHDATE:     line[12],
+		ENTNAME1:      line[13],
+		ENTNAME2:      line[14],
+		ENTNAME3:      line[15],
+		RUNAME1:       line[16],
+		RUNAME2:       line[17],
+		RUNAME3:       line[18],
+		TRADSTYLE1:    line[19],
+		TRADSTYLE2:    line[20],
+		TRADSTYLE3:    line[21],
+		SELTYPE:       line[22],
+		INCLEXCL:      line[23],
+		CELLNO:        line[24],
+		FORMTYPE:      line[25],
+		CURRENCY:      line[26],
 	}
 	logger.Debug("sample created", zap.String("SAMPLEUNITREF", sampleUnit.SAMPLEUNITREF))
 	return sampleUnit
@@ -149,7 +139,7 @@ func (s Sample) sendHttpRequest(url string, payload []byte) (string, error) {
 
 		sampleUnitId, ok := data["id"].(string)
 		if !ok {
-			logger.Warn("missing sample unit id")
+			logger.Error("missing sample unit id", zap.String("sampleUnitRef", s.SAMPLEUNITREF), zap.String("messageId", s.msg.ID))
 			sampleUnitId = ""
 		}
 		return sampleUnitId, nil

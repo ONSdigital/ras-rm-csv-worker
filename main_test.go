@@ -17,7 +17,7 @@ import (
 )
 
 var (
-	sample = "13110000001:::::::::::WW:::::OFFICE FOR NATIONAL STATISTICS:::::::::0001:"
+	line = "13110000001:::::::::::WW:::::OFFICE FOR NATIONAL STATISTICS:::::::::0001:"
 	client *pubsub.Client
 	ctx    context.Context
 )
@@ -73,7 +73,7 @@ func TestSubscribe(t *testing.T) {
 	assert.Nil(err)
 
 	msg := &pubsub.Message{
-		Data: []byte(sample),
+		Data: []byte(line),
 		Attributes: map[string]string{
 			"sample_summary_id": "test",
 		},
@@ -100,7 +100,8 @@ func TestSubscribe(t *testing.T) {
 }
 
 func parseSample(err error, assert *assert.Assertions) []byte {
-	s := parse([]byte(sample))
+	sample := readSampleLine([]byte(line))
+	s := create(sample)
 	sampleJson, err := s.marshall()
 	assert.Nil(err)
 	return sampleJson
@@ -157,7 +158,8 @@ func TestDeadletterAsSampleSummaryIdMissing(t *testing.T) {
 	dlqTopicSub := createDLQSubscription(err, dlqTopic, assert, sub)
 	defer dlqTopicSub.Delete(ctx)
 
-	s := parse([]byte(sample))
+	sample := readSampleLine([]byte(line))
+	s := create(sample)
 	sampleJson, err := s.marshall()
 	assert.Nil(err)
 
@@ -176,7 +178,7 @@ func TestDeadletterAsSampleSummaryIdMissing(t *testing.T) {
 	assert.Nil(err)
 
 	msg := &pubsub.Message{
-		Data: []byte(sample),
+		Data: []byte(line),
 		ID:   "1",
 	}
 
