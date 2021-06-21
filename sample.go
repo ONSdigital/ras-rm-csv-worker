@@ -157,7 +157,7 @@ func (s Sample) sendHttpRequest(url string, payload []byte) (string, error) {
 }
 
 func (s Sample) getSampleUnitID() (string, error) {
-	logger.Debug("attempting to retrieve sample unit ", zap.String("sampleUnitRef", s.SAMPLEUNITREF), zap.String("messageId", s.msg.ID))
+	logger.Debug("attempting to retrieve sample unit", zap.String("sampleUnitRef", s.SAMPLEUNITREF), zap.String("messageId", s.msg.ID))
 	sampleServiceBaseUrl := viper.GetString("SAMPLE_SERVICE_BASE_URL")
 	sampleServiceGetPath := fmt.Sprintf("/samples/%s/sampleunits/%s", s.sampleSummaryId, s.SAMPLEUNITREF)
 	sampleServiceGetUrl := sampleServiceBaseUrl + sampleServiceGetPath
@@ -181,6 +181,7 @@ func (s Sample) getSampleUnitID() (string, error) {
 			logger.Error("error decoding JSON response", zap.Error(err))
 		}
 		sampleUnitId, ok := data["id"].(string)
+		logger.Debug("retrieved sample unit id", zap.String("sampleUnitId", sampleUnitId), zap.String("sampleUnitRef", s.SAMPLEUNITREF), zap.String("messageId", s.msg.ID))
 		if !ok {
 			logger.Error("missing sample unit id", zap.String("sampleUnitRef", s.SAMPLEUNITREF), zap.String("messageId", s.msg.ID))
 			return "", errors.New("unable to find sample unit")
