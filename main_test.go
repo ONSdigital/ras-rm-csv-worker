@@ -63,7 +63,7 @@ func TestSubscribe(t *testing.T) {
 		assert.Nil(err)
 		assert.Equal(sampleJson, body)
 		w.WriteHeader(http.StatusCreated)
-		w.Write([]byte("OK"))
+		w.Write([]byte("{\"id\":\"1111\"}"))
 	}))
 
 	defer ts.Close()
@@ -168,7 +168,7 @@ func TestDeadletterAsSampleSummaryIdMissing(t *testing.T) {
 		assert.Nil(err)
 		assert.Equal(sampleJson, body)
 		w.WriteHeader(http.StatusCreated)
-		w.Write([]byte("OK"))
+		w.Write([]byte("{\"id\":\"1111\"}"))
 	}))
 
 	defer ts.Close()

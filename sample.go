@@ -139,17 +139,54 @@ func (s Sample) sendHttpRequest(url string, payload []byte) (string, error) {
 
 		sampleUnitId, ok := data["id"].(string)
 		if !ok {
-			logger.Error("missing sample unit id", zap.String("sampleUnitRef", s.SAMPLEUNITREF), zap.String("messageId", s.msg.ID))
-			sampleUnitId = ""
+			logger.Error("missing sample unit id - attempting to retrieve", zap.String("sampleUnitRef", s.SAMPLEUNITREF), zap.String("messageId", s.msg.ID))
+			sampleUnitId, err = s.getSampleUnitID()
+			if err != nil {
+				return "", err
+			}
 		}
 		return sampleUnitId, nil
-
 	} else if resp.StatusCode == http.StatusConflict {
 		logger.Warn("attempted to create duplicate sample", zap.Int("status code", resp.StatusCode), zap.String("sampleUnitRef", s.SAMPLEUNITREF), zap.String("messageId", s.msg.ID))
-		// if this sample unit has already been created ack the message to stop it being recreated
-		return "", nil
+		// if this sample unit has already been created attempt to retrieve the sample unit id
+		return s.getSampleUnitID()
 	} else {
 		logger.Error("sample not created status", zap.Int("status code", resp.StatusCode), zap.String("sampleUnitRef", s.SAMPLEUNITREF), zap.String("messageId", s.msg.ID))
 		return "", errors.New(fmt.Sprintf("sample not created - status code %d", resp.StatusCode))
+	}
+}
+
+func (s Sample) getSampleUnitID() (string, error) {
+	logger.Debug("attempting to retrieve sample unit ", zap.String("sampleUnitRef", s.SAMPLEUNITREF), zap.String("messageId", s.msg.ID))
+	sampleServiceBaseUrl := viper.GetString("SAMPLE_SERVICE_BASE_URL")
+	sampleServiceGetPath := fmt.Sprintf("/samples/%s/sampleunits/%s", s.sampleSummaryId, s.SAMPLEUNITREF)
+	sampleServiceGetUrl := sampleServiceBaseUrl + sampleServiceGetPath
+	logger.Info("using sample service url", zap.String("url", sampleServiceGetUrl))
+
+	resp, err := http.Get(sampleServiceGetUrl)
+	if err != nil {
+		logger.Error("error sending HTTP request", zap.Error(err))
+		return "", err
+	}
+	defer resp.Body.Close()
+	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		logger.Error("error reading HTTP response", zap.Error(err))
+		return "", err
+	}
+	if resp.StatusCode == http.StatusOK {
+		data := make(map[string]interface{})
+		err := json.Unmarshal(body, &data)
+		if err != nil {
+			logger.Error("error decoding JSON response", zap.Error(err))
+		}
+		sampleUnitId, ok := data["id"].(string)
+		if !ok {
+			logger.Error("missing sample unit id", zap.String("sampleUnitRef", s.SAMPLEUNITREF), zap.String("messageId", s.msg.ID))
+			return "", errors.New("unable to find sample unit")
+		}
+		return sampleUnitId, nil
+	} else {
+		return "", errors.New(fmt.Sprintf("sample unit not retrieved - status code %d", resp.StatusCode))
 	}
 }

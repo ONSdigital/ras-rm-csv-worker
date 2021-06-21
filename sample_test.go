@@ -16,7 +16,7 @@ func TestSampleSuccess(t *testing.T) {
 	assert := assert.New(t)
 	ts := httptest.NewUnstartedServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusCreated)
-		w.Write([]byte("OK"))
+		w.Write([]byte("{\"id\":\"1111\"}"))
 	}))
 	ts.Start()
 	defer ts.Close()
@@ -99,7 +99,7 @@ func TestSendHttpRequest(t *testing.T) {
 		assert.Nil(err)
 		assert.Equal(payload, body)
 		w.WriteHeader(http.StatusCreated)
-		w.Write([]byte("OK"))
+		w.Write([]byte("{\"id\":\"1111\"}"))
 	}))
 	ts.Start()
 	defer ts.Close()
@@ -139,7 +139,7 @@ func TestSendHttpRequestWrongStatus(t *testing.T) {
 		assert.Nil(err)
 		assert.Equal(payload, body)
 		w.WriteHeader(http.StatusAccepted)
-		w.Write([]byte("OK"))
+		w.Write([]byte("{\"id\":\"1111\"}"))
 	}))
 	ts.Start()
 	defer ts.Close()
@@ -151,7 +151,7 @@ func TestSendSampleSuccess(t *testing.T) {
 	assert := assert.New(t)
 	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusCreated)
-		w.Write([]byte("OK"))
+		w.Write([]byte("{\"id\":\"1111\"}"))
 	}))
 	defer ts.Close()
 

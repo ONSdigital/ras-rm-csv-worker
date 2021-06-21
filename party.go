@@ -146,7 +146,6 @@ func (p Party) getPartyServiceUrl() string {
 }
 
 func (p Party) sendHttpRequest(url string, payload []byte) error {
-	//resp, err := http.Post(url, "application/json", bytes.NewReader(payload))
 	username := viper.GetString("SECURITY_USER_NAME")
 	password := viper.GetString("SECURITY_USER_PASSWORD")
 	client := &http.Client{}
@@ -172,12 +171,8 @@ func (p Party) sendHttpRequest(url string, payload []byte) error {
 	if resp.StatusCode == http.StatusOK || resp.StatusCode == http.StatusCreated {
 		logger.Info("party created", zap.String("sampleUnitRef", p.SAMPLEUNITREF), zap.String("messageId", p.msg.ID))
 		return nil
-	} else if resp.StatusCode == http.StatusConflict {
-		logger.Warn("attempted to create duplicate sample", zap.Int("status code", resp.StatusCode), zap.String("sampleUnitRef", p.SAMPLEUNITREF), zap.String("messageId", p.msg.ID))
-		// if this sample unit has already been created ack the message to stop it being recreated
-		return nil
 	} else {
-		logger.Error("party not created status", zap.Int("status code", resp.StatusCode), zap.String("sampleUnitRef", p.SAMPLEUNITREF), zap.String("messageId", p.msg.ID))
+		logger.Error("party not created", zap.Int("status code", resp.StatusCode), zap.String("sampleUnitRef", p.SAMPLEUNITREF), zap.String("messageId", p.msg.ID))
 		return errors.New(fmt.Sprintf("sample not created - status code %d", resp.StatusCode))
 	}
 }
