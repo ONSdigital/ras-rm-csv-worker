@@ -12,6 +12,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+
 func TestSampleSuccess(t *testing.T) {
 	assert := assert.New(t)
 	ts := httptest.NewUnstartedServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -210,6 +211,42 @@ func TestMarshallEmptyStruct(t *testing.T) {
 	assert.Nil(err)
 	emptySample := createEmptySample()
 	assert.Equal(emptySample, string(sample))
+}
+
+func TestGetSampleUnit(t *testing.T) {
+	configureLogging()
+	assert := assert.New(t)
+
+	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusOK)
+		w.Write([]byte("{\"id\":\"1111\"}"))
+	}))
+	defer ts.Close()
+
+	fmt.Printf("Setting sample service base url %v\n", ts.URL)
+	viper.Set("SAMPLE_SERVICE_BASE_URL", ts.URL)
+
+	s := createSample()
+	id, err := s.getSampleUnitID()
+	assert.Nil(err, "error should be nil")
+	assert.Equal("1111", id)
+}
+
+func TestGetSampleUnitErrorResponse(t *testing.T) {
+	configureLogging()
+	assert := assert.New(t)
+
+	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusInternalServerError)
+	}))
+	defer ts.Close()
+
+	fmt.Printf("Setting sample service base url %v\n", ts.URL)
+	viper.Set("SAMPLE_SERVICE_BASE_URL", ts.URL)
+
+	s := createSample()
+	_, err := s.getSampleUnitID()
+	assert.NotNil(err, "error should be not nil")
 }
 
 func createSample() *Sample {

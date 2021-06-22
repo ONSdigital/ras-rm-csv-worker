@@ -49,7 +49,7 @@ type Attributes struct {
 	CELLNO       int    `json:"cellNo"`
 	FORMTYPE     string `json:"formType"`
 	CURRENCY     string `json:"currency"`
-	SAMPLEUNITID string `json:"sampleUnitRef"`
+	SAMPLEUNITID string `json:"sampleUnitId"`
 }
 
 func processParty(line []string, sampleSummaryId string, sampleUnitId string, msg *pubsub.Message) error {
