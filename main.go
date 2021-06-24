@@ -1,8 +1,10 @@
 package main
 
 import (
+	"bytes"
 	"cloud.google.com/go/pubsub"
 	"context"
+	"encoding/csv"
 	"github.com/blendle/zapdriver"
 	"github.com/spf13/viper"
 	"go.uber.org/zap"
@@ -59,17 +61,25 @@ func (cw CSVWorker) subscribe(ctx context.Context, client *pubsub.Client) {
 			logger.Info("Message delivery attempted", zap.Int("delivery attempts", *msg.DeliveryAttempt))
 		}
 
-		sample := msg.Data
+		data := msg.Data
 		attribute := msg.Attributes
 		sampleSummaryId, ok := attribute["sample_summary_id"]
 		if ok {
 			logger.Info("about to process sample", zap.String("sampleSummaryId", sampleSummaryId))
-			err := processSample(sample, sampleSummaryId, msg)
+			line := readSampleLine(data)
+			sampleUnitId, err := processSample(line, sampleSummaryId, msg)
 			if err != nil {
 				logger.Error("error processing sample - nacking message", zap.Error(err))
 				//after x number of nacks message will be DLQ
 				msg.Nack()
 			} else {
+				//now the sample has been created, lets create the associated party
+				err := processParty(line, sampleSummaryId, sampleUnitId, msg)
+				if err != nil {
+					logger.Error("error processing party - nacking message", zap.Error(err))
+					//after x number of nacks message will be DLQ
+					msg.Nack()
+				}
 				logger.Info("sample processed - acking message")
 				msg.Ack()
 			}
@@ -86,6 +96,19 @@ func (cw CSVWorker) subscribe(ctx context.Context, client *pubsub.Client) {
 		logger.Error("error subscribing")
 		cancel()
 	}
+}
+
+func readSampleLine(line []byte) []string {
+	logger.Debug("reading csv line")
+	r := csv.NewReader(bytes.NewReader(line))
+	r.Comma = ':'
+
+	sample, err := r.Read()
+	if err != nil {
+		logger.Fatal("unable to parse sample csv", zap.Error(err))
+	}
+	logger.Debug("read sample", zap.Strings("sample", sample))
+	return sample
 }
 
 // send message to DLQ immediately
@@ -110,6 +133,9 @@ func setDefaults() {
 	viper.SetDefault("GOOGLE_CLOUD_PROJECT", "rm-ras-sandbox")
 	viper.SetDefault("VERBOSE", true)
 	viper.SetDefault("SAMPLE_SERVICE_BASE_URL", "http://localhost:8080")
+	viper.SetDefault("PARTY_SERVICE_BASE_URL", "http://localhost:8080")
+	viper.SetDefault("SECURITY_USER_NAME", "admin")
+	viper.SetDefault("SECURITY_USER_PASSWORD", "secret")
 }
 
 func work() {

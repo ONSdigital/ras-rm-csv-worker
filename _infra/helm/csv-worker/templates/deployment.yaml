@@ -45,11 +45,27 @@ spec:
             {{- else }}
             value: "http://$(SAMPLE_SERVICE_HOST):$(SAMPLE_SERVICE_PORT)"
             {{- end }}
+          - name: PARTY_SERVICE_BASE_URL
+            {{- if .Values.dns.enabled }}
+            value: "http://party.{{ .Values.namespace }}.svc.cluster.local:{{ .Values.dns.wellKnownPort }}"
+            {{- else }}
+            value: "http://$(PARTY_SERVICE_HOST):$(PARTY_SERVICE_PORT)"
+            {{- end }}
           - name: VERBOSE
             value: {{.Values.verbose | quote }}
           - name: GOOGLE_APPLICATION_CREDENTIALS
             value: /var/secrets/google/credentials.json
           - name: GOOGLE_CLOUD_PROJECT
             value: {{ .Values.gcp.project }}
+          - name: SECURITY_USER_NAME
+            valueFrom:
+              secretKeyRef:
+                name: security-credentials
+                key: security-user
+          - name: SECURITY_USER_PASSWORD
+            valueFrom:
+              secretKeyRef:
+                name: security-credentials
+                key: security-password
           resources:
             {{ toYaml .Values.resources | nindent 12 }}

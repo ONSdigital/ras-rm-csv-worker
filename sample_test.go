@@ -12,11 +12,12 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+
 func TestSampleSuccess(t *testing.T) {
 	assert := assert.New(t)
 	ts := httptest.NewUnstartedServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusCreated)
-		w.Write([]byte("OK"))
+		w.Write([]byte("{\"id\":\"1111\"}"))
 	}))
 	ts.Start()
 	defer ts.Close()
@@ -24,17 +25,17 @@ func TestSampleSuccess(t *testing.T) {
 	fmt.Printf("Setting sample service base url %v", ts.URL)
 	viper.Set("SAMPLE_SERVICE_BASE_URL", ts.URL)
 
-	sample := []byte("13110000001:::::::::::WW:::::OFFICE FOR NATIONAL STATISTICS:::::::::0001:")
+	line := []byte("13110000001:::::::::::WW:::::OFFICE FOR NATIONAL STATISTICS:::::::::0001:")
 
 	msg := &pubsub.Message{
-		Data: []byte(sample),
+		Data: []byte(line),
 		Attributes: map[string]string{
 			"sample_summary_id": "test",
 		},
 		ID: "1",
 	}
-
-	err := processSample(sample, "test", msg)
+	sample := readSampleLine(line)
+	_, err := processSample(sample, "test", msg)
 	assert.Nil(err, "error should be nil")
 }
 
@@ -50,24 +51,25 @@ func TestSampleError(t *testing.T) {
 	fmt.Printf("Setting sample service base url %v", ts.URL)
 	viper.Set("SAMPLE_SERVICE_BASE_URL", ts.URL)
 
-	sample := []byte("13110000001:::::::::::WW:::::OFFICE FOR NATIONAL STATISTICS:::::::::0001:")
+	line := []byte("13110000001:::::::::::WW:::::OFFICE FOR NATIONAL STATISTICS:::::::::0001:")
 
 	msg := &pubsub.Message{
-		Data: []byte(sample),
+		Data: []byte(line),
 		Attributes: map[string]string{
 			"sample_summary_id": "test",
 		},
 		ID: "1",
 	}
 
-	err := processSample(sample, "test", msg)
+	sample := readSampleLine(line)
+	_, err := processSample(sample, "test", msg)
 	assert.NotNil(t, err, "error should not be nil")
 }
 
 func TestSampleServerURL(t *testing.T) {
 	s := &Sample{}
 	s.msg = &pubsub.Message{
-		Data: []byte(sample),
+		Data: []byte(line),
 		Attributes: map[string]string{
 			"sample_summary_id": "test",
 		},
@@ -84,7 +86,7 @@ func TestSampleServerURL(t *testing.T) {
 func TestSendHttpRequest(t *testing.T) {
 	s := &Sample{}
 	s.msg = &pubsub.Message{
-		Data: []byte(sample),
+		Data: []byte(line),
 		Attributes: map[string]string{
 			"sample_summary_id": "test",
 		},
@@ -98,18 +100,18 @@ func TestSendHttpRequest(t *testing.T) {
 		assert.Nil(err)
 		assert.Equal(payload, body)
 		w.WriteHeader(http.StatusCreated)
-		w.Write([]byte("OK"))
+		w.Write([]byte("{\"id\":\"1111\"}"))
 	}))
 	ts.Start()
 	defer ts.Close()
-	err := s.sendHttpRequest(ts.URL, payload)
+	_, err := s.sendHttpRequest(ts.URL, payload)
 	assert.Nil(err, "error should be nil")
 }
 
 func TestSendHttpRequestBadUrl(t *testing.T) {
 	s := &Sample{}
 	s.msg = &pubsub.Message{
-		Data: []byte(sample),
+		Data: []byte(line),
 		Attributes: map[string]string{
 			"sample_summary_id": "test",
 		},
@@ -117,14 +119,14 @@ func TestSendHttpRequestBadUrl(t *testing.T) {
 	}
 	assert := assert.New(t)
 	payload := []byte("TEST")
-	err := s.sendHttpRequest("http://localhost", payload)
+	_, err := s.sendHttpRequest("http://localhost", payload)
 	assert.NotNil(err, "error should be nil")
 }
 
 func TestSendHttpRequestWrongStatus(t *testing.T) {
 	s := &Sample{}
 	s.msg = &pubsub.Message{
-		Data: []byte(sample),
+		Data: []byte(line),
 		Attributes: map[string]string{
 			"sample_summary_id": "test",
 		},
@@ -138,11 +140,11 @@ func TestSendHttpRequestWrongStatus(t *testing.T) {
 		assert.Nil(err)
 		assert.Equal(payload, body)
 		w.WriteHeader(http.StatusAccepted)
-		w.Write([]byte("OK"))
+		w.Write([]byte("{\"id\":\"1111\"}"))
 	}))
 	ts.Start()
 	defer ts.Close()
-	err := s.sendHttpRequest(ts.URL, payload)
+	_, err := s.sendHttpRequest(ts.URL, payload)
 	assert.NotNil(err, "error should be nil")
 }
 
@@ -150,7 +152,7 @@ func TestSendSampleSuccess(t *testing.T) {
 	assert := assert.New(t)
 	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusCreated)
-		w.Write([]byte("OK"))
+		w.Write([]byte("{\"id\":\"1111\"}"))
 	}))
 	defer ts.Close()
 
@@ -158,7 +160,7 @@ func TestSendSampleSuccess(t *testing.T) {
 	viper.Set("SAMPLE_SERVICE_BASE_URL", ts.URL)
 
 	s := createSample()
-	err := s.sendToSampleService()
+	_, err := s.sendToSampleService()
 	assert.Nil(err, "error should be nil")
 }
 
@@ -211,6 +213,42 @@ func TestMarshallEmptyStruct(t *testing.T) {
 	assert.Equal(emptySample, string(sample))
 }
 
+func TestGetSampleUnit(t *testing.T) {
+	configureLogging()
+	assert := assert.New(t)
+
+	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusOK)
+		w.Write([]byte("{\"id\":\"1111\"}"))
+	}))
+	defer ts.Close()
+
+	fmt.Printf("Setting sample service base url %v\n", ts.URL)
+	viper.Set("SAMPLE_SERVICE_BASE_URL", ts.URL)
+
+	s := createSample()
+	id, err := s.getSampleUnitID()
+	assert.Nil(err, "error should be nil")
+	assert.Equal("1111", id)
+}
+
+func TestGetSampleUnitErrorResponse(t *testing.T) {
+	configureLogging()
+	assert := assert.New(t)
+
+	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusInternalServerError)
+	}))
+	defer ts.Close()
+
+	fmt.Printf("Setting sample service base url %v\n", ts.URL)
+	viper.Set("SAMPLE_SERVICE_BASE_URL", ts.URL)
+
+	s := createSample()
+	_, err := s.getSampleUnitID()
+	assert.NotNil(err, "error should be not nil")
+}
+
 func createSample() *Sample {
 	s := &Sample{}
 	s.BIRTHDATE = "010180"
@@ -241,7 +279,7 @@ func createSample() *Sample {
 	s.TRADSTYLE2 = "trad2"
 	s.TRADSTYLE3 = "trad3"
 	s.msg = &pubsub.Message{
-		Data: []byte(sample),
+		Data: []byte(line),
 		Attributes: map[string]string{
 			"sample_summary_id": "test",
 		},

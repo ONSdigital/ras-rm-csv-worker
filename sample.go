@@ -3,7 +3,6 @@ package main
 import (
 	"bytes"
 	"cloud.google.com/go/pubsub"
-	"encoding/csv"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -47,61 +46,52 @@ type Sample struct {
 	msg             *pubsub.Message `json:"-"`
 }
 
-func processSample(line []byte, sampleSummaryId string, msg *pubsub.Message) error {
+func processSample(line []string, sampleSummaryId string, msg *pubsub.Message) (string, error) {
 	logger.Debug("processing sample")
-	s := parse(line)
+	s := create(line)
 	s.sampleSummaryId = sampleSummaryId
 	s.msg = msg
 	return s.sendToSampleService()
 }
 
-func parse(line []byte) *Sample {
-	logger.Debug("reading csv line")
-	r := csv.NewReader(bytes.NewReader(line))
-	r.Comma = ':'
-
-	sample, err := r.Read()
-	if err != nil {
-		logger.Fatal("unable to parse sample csv", zap.Error(err))
-	}
-	logger.Debug("read sample", zap.Strings("sample", sample))
+func create(line []string) *Sample {
 	sampleUnit := &Sample{
-		SAMPLEUNITREF: sample[0],
-		CHECKLETTER:   sample[1],
-		FROSIC92:      sample[2],
-		RUSIC92:       sample[3],
-		FROSIC2007:    sample[4],
-		RUSIC2007:     sample[5],
-		FROEMPMENT:    sample[6],
-		FROTOVER:      sample[7],
-		ENTREF:        sample[8],
-		LEGALSTATUS:   sample[9],
-		ENTREPMKR:     sample[10],
-		REGION:        sample[11],
-		BIRTHDATE:     sample[12],
-		ENTNAME1:      sample[13],
-		ENTNAME2:      sample[14],
-		ENTNAME3:      sample[15],
-		RUNAME1:       sample[16],
-		RUNAME2:       sample[17],
-		RUNAME3:       sample[18],
-		TRADSTYLE1:    sample[19],
-		TRADSTYLE2:    sample[20],
-		TRADSTYLE3:    sample[21],
-		SELTYPE:       sample[22],
-		INCLEXCL:      sample[23],
-		CELLNO:        sample[24],
-		FORMTYPE:      sample[25],
-		CURRENCY:      sample[26],
+		SAMPLEUNITREF: line[0],
+		CHECKLETTER:   line[1],
+		FROSIC92:      line[2],
+		RUSIC92:       line[3],
+		FROSIC2007:    line[4],
+		RUSIC2007:     line[5],
+		FROEMPMENT:    line[6],
+		FROTOVER:      line[7],
+		ENTREF:        line[8],
+		LEGALSTATUS:   line[9],
+		ENTREPMKR:     line[10],
+		REGION:        line[11],
+		BIRTHDATE:     line[12],
+		ENTNAME1:      line[13],
+		ENTNAME2:      line[14],
+		ENTNAME3:      line[15],
+		RUNAME1:       line[16],
+		RUNAME2:       line[17],
+		RUNAME3:       line[18],
+		TRADSTYLE1:    line[19],
+		TRADSTYLE2:    line[20],
+		TRADSTYLE3:    line[21],
+		SELTYPE:       line[22],
+		INCLEXCL:      line[23],
+		CELLNO:        line[24],
+		FORMTYPE:      line[25],
+		CURRENCY:      line[26],
 	}
 	logger.Debug("sample created", zap.String("SAMPLEUNITREF", sampleUnit.SAMPLEUNITREF))
 	return sampleUnit
 }
 
-func (s *Sample) sendToSampleService() error {
+func (s *Sample) sendToSampleService() (string, error) {
 	payload, err := s.marshall()
 	if err != nil {
-		return err
+		return "", err
 	}
 	sampleServiceUrl := s.getSampleServiceUrl()
 	return s.sendHttpRequest(sampleServiceUrl, payload)
@@ -126,28 +116,78 @@ func (s Sample) getSampleServiceUrl() string {
 	return sampleServiceUrl
 }
 
-func (s Sample) sendHttpRequest(url string, payload []byte) error {
+func (s Sample) sendHttpRequest(url string, payload []byte) (string, error) {
 	resp, err := http.Post(url, "application/json", bytes.NewReader(payload))
 	if err != nil {
 		logger.Error("error sending HTTP request", zap.Error(err))
-		return err
+		return "", err
 	}
 	defer resp.Body.Close()
 	body, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
 		logger.Error("error reading HTTP response", zap.Error(err))
-		return err
+		return "", err
 	}
 	logger.Debug("response received", zap.ByteString("body", body))
 	if resp.StatusCode == http.StatusCreated {
 		logger.Info("sample created", zap.String("sampleUnitRef", s.SAMPLEUNITREF), zap.String("messageId", s.msg.ID))
-		return nil
+		data := make(map[string]interface{})
+		err := json.Unmarshal(body, &data)
+		if err != nil {
+			logger.Error("error decoding JSON response", zap.Error(err))
+		}
+
+		sampleUnitId, ok := data["id"].(string)
+		if !ok {
+			logger.Error("missing sample unit id - attempting to retrieve", zap.String("sampleUnitRef", s.SAMPLEUNITREF), zap.String("messageId", s.msg.ID))
+			sampleUnitId, err = s.getSampleUnitID()
+			if err != nil {
+				return "", err
+			}
+		}
+		return sampleUnitId, nil
 	} else if resp.StatusCode == http.StatusConflict {
 		logger.Warn("attempted to create duplicate sample", zap.Int("status code", resp.StatusCode), zap.String("sampleUnitRef", s.SAMPLEUNITREF), zap.String("messageId", s.msg.ID))
-		// if this sample unit has already been created ack the message to stop it being recreated
-		return nil
+		// if this sample unit has already been created attempt to retrieve the sample unit id
+		return s.getSampleUnitID()
 	} else {
 		logger.Error("sample not created status", zap.Int("status code", resp.StatusCode), zap.String("sampleUnitRef", s.SAMPLEUNITREF), zap.String("messageId", s.msg.ID))
-		return errors.New(fmt.Sprintf("sample not created - status code %d", resp.StatusCode))
+		return "", errors.New(fmt.Sprintf("sample not created - status code %d", resp.StatusCode))
+	}
+}
+
+func (s Sample) getSampleUnitID() (string, error) {
+	logger.Debug("attempting to retrieve sample unit", zap.String("sampleUnitRef", s.SAMPLEUNITREF), zap.String("messageId", s.msg.ID))
+	sampleServiceBaseUrl := viper.GetString("SAMPLE_SERVICE_BASE_URL")
+	sampleServiceGetPath := fmt.Sprintf("/samples/%s/sampleunits/%s", s.sampleSummaryId, s.SAMPLEUNITREF)
+	sampleServiceGetUrl := sampleServiceBaseUrl + sampleServiceGetPath
+	logger.Info("using sample service url", zap.String("url", sampleServiceGetUrl))
+
+	resp, err := http.Get(sampleServiceGetUrl)
+	if err != nil {
+		logger.Error("error sending HTTP request", zap.Error(err))
+		return "", err
+	}
+	defer resp.Body.Close()
+	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		logger.Error("error reading HTTP response", zap.Error(err))
+		return "", err
+	}
+	if resp.StatusCode == http.StatusOK {
+		data := make(map[string]interface{})
+		err := json.Unmarshal(body, &data)
+		if err != nil {
+			logger.Error("error decoding JSON response", zap.Error(err))
+		}
+		sampleUnitId, ok := data["id"].(string)
+		logger.Debug("retrieved sample unit id", zap.String("sampleUnitId", sampleUnitId), zap.String("sampleUnitRef", s.SAMPLEUNITREF), zap.String("messageId", s.msg.ID))
+		if !ok {
+			logger.Error("missing sample unit id", zap.String("sampleUnitRef", s.SAMPLEUNITREF), zap.String("messageId", s.msg.ID))
+			return "", errors.New("unable to find sample unit")
+		}
+		return sampleUnitId, nil
+	} else {
+		return "", errors.New(fmt.Sprintf("sample unit not retrieved - status code %d", resp.StatusCode))
 	}
 }
