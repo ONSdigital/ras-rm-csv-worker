@@ -37,6 +37,32 @@ func TestPartySuccess(t *testing.T) {
 	assert.Nil(err, "error should be nil")
 }
 
+func TestPartyConflict(t *testing.T) {
+	assert := assert.New(t)
+	ts := httptest.NewUnstartedServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusConflict)
+		w.Write([]byte("OK"))
+	}))
+	ts.Start()
+	defer ts.Close()
+
+	fmt.Printf("Setting party service base url %v", ts.URL)
+	viper.Set("PARTY_SERVICE_BASE_URL", ts.URL)
+
+	line := []byte("13110000001:::::::::::WW:::::OFFICE FOR NATIONAL STATISTICS:::::::::0001:")
+
+	msg := &pubsub.Message{
+		Data: []byte(line),
+		Attributes: map[string]string{
+			"sample_summary_id": "test",
+		},
+		ID: "1",
+	}
+	sample := readSampleLine(line)
+	err := processParty(sample, "test", "test", msg)
+	assert.Nil(err, "error should be nil")
+}
+
 
 func TestPartyError(t *testing.T) {
 	assert := assert.New(t)
