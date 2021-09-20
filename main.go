@@ -128,8 +128,8 @@ func deadLetter(ctx context.Context, client *pubsub.Client, msg *pubsub.Message)
 }
 
 func setDefaults() {
-	viper.SetDefault("PUBSUB_SUB_ID", "sample-workers")
-	viper.SetDefault("PUB_SUB_TOPIC", "sample-jobs")
+	viper.SetDefault("PUBSUB_SUB_ID", "sample-file")
+	viper.SetDefault("PUB_SUB_TOPIC", "sample-file")
 	viper.SetDefault("GOOGLE_CLOUD_PROJECT", "rm-ras-sandbox")
 	viper.SetDefault("VERBOSE", true)
 	viper.SetDefault("SAMPLE_SERVICE_BASE_URL", "http://localhost:8080")

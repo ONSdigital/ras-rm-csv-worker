@@ -108,7 +108,7 @@ func parseSample(err error, assert *assert.Assertions) []byte {
 }
 
 func createDLQSubscription(err error, dlqTopic *pubsub.Topic, assert *assert.Assertions, sub *pubsub.Subscription) *pubsub.Subscription {
-	dlqTopicSub, err := client.CreateSubscription(ctx, "sample-jobs-dead-letter", pubsub.SubscriptionConfig{
+	dlqTopicSub, err := client.CreateSubscription(ctx, "sample-file-dead-letter", pubsub.SubscriptionConfig{
 		Topic: dlqTopic,
 	})
 	assert.Nil(err)
@@ -118,7 +118,7 @@ func createDLQSubscription(err error, dlqTopic *pubsub.Topic, assert *assert.Ass
 }
 
 func createSubscription(err error, topic *pubsub.Topic, assert *assert.Assertions) *pubsub.Subscription {
-	sub, err := client.CreateSubscription(ctx, "sample-workers", pubsub.SubscriptionConfig{
+	sub, err := client.CreateSubscription(ctx, "sample-file", pubsub.SubscriptionConfig{
 		Topic: topic,
 	})
 	assert.Nil(err)
@@ -128,7 +128,7 @@ func createSubscription(err error, topic *pubsub.Topic, assert *assert.Assertion
 }
 
 func createTopicDLQ(err error, assert *assert.Assertions, topic *pubsub.Topic) *pubsub.Topic {
-	dlqTopic, err := client.CreateTopic(ctx, "sample-jobs-dead-letter")
+	dlqTopic, err := client.CreateTopic(ctx, "sample-file-dead-letter")
 	assert.Nil(err)
 	assert.NotNil(topic)
 	fmt.Println(topic)
@@ -136,7 +136,7 @@ func createTopicDLQ(err error, assert *assert.Assertions, topic *pubsub.Topic) *
 }
 
 func createTopic(assert *assert.Assertions) (*pubsub.Topic, error) {
-	topic, err := client.CreateTopic(ctx, "sample-jobs")
+	topic, err := client.CreateTopic(ctx, "sample-file")
 	assert.Nil(err)
 	assert.NotNil(topic)
 	fmt.Println(topic)
