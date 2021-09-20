@@ -47,14 +47,8 @@ func TestSubscribe(t *testing.T) {
 	topic, err := createTopic(assert)
 	defer topic.Delete(ctx)
 
-	dlqTopic := createTopicDLQ(err, assert, topic)
-	defer dlqTopic.Delete(ctx)
-
 	sub := createSubscription(err, topic, assert)
 	defer sub.Delete(ctx)
-
-	dlqTopicSub := createDLQSubscription(err, dlqTopic, assert, sub)
-	defer dlqTopicSub.Delete(ctx)
 
 	sampleJson := parseSample(err, assert)
 
@@ -89,9 +83,7 @@ func TestSubscribe(t *testing.T) {
 	go worker.subscribe(ctx, client)
 
 	var dlqMsgData []byte
-	go dlqTopicSub.Receive(ctx, func(ctx context.Context, dlqMsg *pubsub.Message) {
-		dlqMsgData = dlqMsg.Data
-	})
+
 	//sleep a second for the test to complete, then allow everything to shut down
 	time.Sleep(1 * time.Second)
 
@@ -107,16 +99,6 @@ func parseSample(err error, assert *assert.Assertions) []byte {
 	return sampleJson
 }
 
-func createDLQSubscription(err error, dlqTopic *pubsub.Topic, assert *assert.Assertions, sub *pubsub.Subscription) *pubsub.Subscription {
-	dlqTopicSub, err := client.CreateSubscription(ctx, "sample-file-dead-letter", pubsub.SubscriptionConfig{
-		Topic: dlqTopic,
-	})
-	assert.Nil(err)
-	assert.NotNil(sub)
-	fmt.Println(sub)
-	return dlqTopicSub
-}
-
 func createSubscription(err error, topic *pubsub.Topic, assert *assert.Assertions) *pubsub.Subscription {
 	sub, err := client.CreateSubscription(ctx, "sample-file", pubsub.SubscriptionConfig{
 		Topic: topic,
@@ -125,14 +107,6 @@ func createSubscription(err error, topic *pubsub.Topic, assert *assert.Assertion
 	assert.NotNil(sub)
 	fmt.Println(sub)
 	return sub
-}
-
-func createTopicDLQ(err error, assert *assert.Assertions, topic *pubsub.Topic) *pubsub.Topic {
-	dlqTopic, err := client.CreateTopic(ctx, "sample-file-dead-letter")
-	assert.Nil(err)
-	assert.NotNil(topic)
-	fmt.Println(topic)
-	return dlqTopic
 }
 
 func createTopic(assert *assert.Assertions) (*pubsub.Topic, error) {
@@ -149,14 +123,8 @@ func TestDeadletterAsSampleSummaryIdMissing(t *testing.T) {
 	topic, err := createTopic(assert)
 	defer topic.Delete(ctx)
 
-	dlqTopic := createTopicDLQ(err, assert, topic)
-	defer dlqTopic.Delete(ctx)
-
 	sub := createSubscription(err, topic, assert)
 	defer sub.Delete(ctx)
-
-	dlqTopicSub := createDLQSubscription(err, dlqTopic, assert, sub)
-	defer dlqTopicSub.Delete(ctx)
 
 	sample := readSampleLine([]byte(line))
 	s := create(sample)
@@ -191,11 +159,7 @@ func TestDeadletterAsSampleSummaryIdMissing(t *testing.T) {
 	go worker.subscribe(ctx, client)
 
 	var dlqMsgData []byte
-	go dlqTopicSub.Receive(ctx, func(ctx context.Context, dlqMsg *pubsub.Message) {
-		assert.NotNil(dlqMsg)
-		assert.Equal(msg.Data, dlqMsg.Data)
-		dlqMsgData = dlqMsg.Data
-	})
+
 	//sleep a second for the test to complete, then allow everything to shut down
 	time.Sleep(1 * time.Second)
 

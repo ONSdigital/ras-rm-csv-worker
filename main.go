@@ -85,10 +85,7 @@ func (cw CSVWorker) subscribe(ctx context.Context, client *pubsub.Client) {
 			}
 		} else {
 			logger.Error("missing sample summary id - sending to DLQ")
-			err := deadLetter(ctx, client, msg)
-			if err != nil {
-				msg.Nack()
-			}
+			msg.Nack()
 		}
 	})
 
@@ -109,22 +106,6 @@ func readSampleLine(line []byte) []string {
 	}
 	logger.Debug("read sample", zap.Strings("sample", sample))
 	return sample
-}
-
-// send message to DLQ immediately
-func deadLetter(ctx context.Context, client *pubsub.Client, msg *pubsub.Message) error {
-	//DLQ are always named TOPIC + -dead-letter in our terraform scripts
-	deadLetterTopic := viper.GetString("PUB_SUB_TOPIC") + "-dead-letter"
-	dlq := client.Topic(deadLetterTopic)
-	id, err := dlq.Publish(ctx, msg).Get(ctx)
-	if err != nil {
-		logger.Error("unable to forward to dead letter topic",
-			zap.String("msg", string(msg.Data)),
-			zap.Error(err))
-		return err
-	}
-	logger.Info("published to dead letter topic", zap.String("id", id))
-	return nil
 }
 
 func setDefaults() {
