@@ -109,12 +109,16 @@ func setIfNotEmpty(value *string) string {
 }
 
 func convertToInt(value string) int {
-	v, err := strconv.Atoi(value)
-	if err != nil {
-		logger.Error("error converting to int", zap.Error(err))
-		v = 0
+	convertedValue := 0
+	if value != "" {
+		var err error
+		convertedValue, err = strconv.Atoi(value)
+		if err != nil {
+			logger.Error("error converting to int", zap.Error(err))
+			convertedValue = 0
+		}
 	}
-	return v
+	return convertedValue
 }
 
 func (p *Party) sendToPartyService() error {

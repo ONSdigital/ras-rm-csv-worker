@@ -16,16 +16,12 @@ import (
 	"time"
 )
 
-var (
-	line = "13110000001:::::::::::WW:::::OFFICE FOR NATIONAL STATISTICS:::::::::0001:"
-	client *pubsub.Client
-	ctx    context.Context
-)
+var line = "13110000001:::::::::::WW:::::OFFICE FOR NATIONAL STATISTICS:::::::::0001:"
 
-func TestMain(m *testing.M) {
+func TestSubscribe(t *testing.T) {
 
 	//create a fake Pub Sub serer
-	ctx = context.Background()
+	ctx := context.Background()
 	// Start a fake server running locally.
 	srv := pstest.NewServer()
 	defer srv.Close()
@@ -34,25 +30,21 @@ func TestMain(m *testing.M) {
 
 	defer conn.Close()
 	// Use the connection when creating a pubsub client.
-	client, _ = pubsub.NewClient(ctx, "rm-ras-sandbox", option.WithGRPCConn(conn))
+	client, _ := pubsub.NewClient(ctx, "rm-ras-sandbox", option.WithGRPCConn(conn))
 	defer client.Close()
 
-	os.Exit(m.Run())
-}
-
-func TestSubscribe(t *testing.T) {
 	assert := assert.New(t)
 	configure()
 
-	topic, err := createTopic(assert)
+	topic, err := createTopic(client, ctx, assert)
 	defer topic.Delete(ctx)
 
-	sub := createSubscription(err, topic, assert)
+	sub := createSubscription(client, ctx, err, topic, assert)
 	defer sub.Delete(ctx)
 
 	sampleJson := parseSample(err, assert)
 
-	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	sampleServer := httptest.NewServer(http.HandlerFunc( func(w http.ResponseWriter, r *http.Request) {
 		body, err := ioutil.ReadAll(r.Body)
 		assert.Nil(err)
 		assert.Equal(sampleJson, body)
@@ -60,10 +52,18 @@ func TestSubscribe(t *testing.T) {
 		w.Write([]byte("{\"id\":\"1111\"}"))
 	}))
 
-	defer ts.Close()
+	partyServer := httptest.NewServer(http.HandlerFunc( func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusCreated)
+		w.Write([]byte("{\"id\":\"1111\"}"))
+	}))
 
-	fmt.Printf("Setting sample service base url %v", ts.URL)
-	err = os.Setenv("SAMPLE_SERVICE_BASE_URL", ts.URL)
+	defer sampleServer.Close()
+	defer partyServer.Close()
+
+	fmt.Printf("Setting sample url %s", sampleServer.URL)
+	err = os.Setenv("SAMPLE_SERVICE_BASE_URL", sampleServer.URL)
+	fmt.Printf("Setting party url %s", partyServer.URL)
+	err = os.Setenv("PARTY_SERVICE_BASE_URL", partyServer.URL)
 	assert.Nil(err)
 
 	msg := &pubsub.Message{
@@ -79,12 +79,21 @@ func TestSubscribe(t *testing.T) {
 	fmt.Println(id)
 
 	worker := CSVWorker{}
-	configure()
 	go worker.subscribe(ctx, client)
-
 
 	//sleep a second for the test to complete, then allow everything to shut down
 	time.Sleep(1 * time.Second)
+
+	messages := srv.Messages()
+	//check there is a single message
+	assert.Equal(len(messages), 1, "should have been a single message sent to the server")
+
+	//and check it has been ack
+	assert.Equal(1, messages[0].Acks)
+}
+
+func handleResponse(w http.ResponseWriter, r *http.Request, assert *assert.Assertions, sampleJson []byte) {
+
 }
 
 func parseSample(err error, assert *assert.Assertions) []byte {
@@ -95,7 +104,7 @@ func parseSample(err error, assert *assert.Assertions) []byte {
 	return sampleJson
 }
 
-func createSubscription(err error, topic *pubsub.Topic, assert *assert.Assertions) *pubsub.Subscription {
+func createSubscription(client *pubsub.Client, ctx  context.Context, err error, topic *pubsub.Topic, assert *assert.Assertions) *pubsub.Subscription {
 	sub, err := client.CreateSubscription(ctx, "sample-file", pubsub.SubscriptionConfig{
 		Topic: topic,
 	})
@@ -105,7 +114,7 @@ func createSubscription(err error, topic *pubsub.Topic, assert *assert.Assertion
 	return sub
 }
 
-func createTopic(assert *assert.Assertions) (*pubsub.Topic, error) {
+func createTopic(client *pubsub.Client, ctx  context.Context, assert *assert.Assertions) (*pubsub.Topic, error) {
 	topic, err := client.CreateTopic(ctx, "sample-file")
 	assert.Nil(err)
 	assert.NotNil(topic)
@@ -113,33 +122,28 @@ func createTopic(assert *assert.Assertions) (*pubsub.Topic, error) {
 	return topic, err
 }
 
-func TestDeadletterAsSampleSummaryIdMissing(t *testing.T) {
+func TestNoAckAsSampleSummaryIdMissing(t *testing.T) {
+
+	//create a fake Pub Sub serer
+	ctx := context.Background()
+	// Start a fake server running locally.
+	srv := pstest.NewServer()
+	defer srv.Close()
+	// Connect to the server without using TLS.
+	conn, _ := grpc.Dial(srv.Addr, grpc.WithInsecure())
+
+	defer conn.Close()
+	// Use the connection when creating a pubsub client.
+	client, _ := pubsub.NewClient(ctx, "rm-ras-sandbox", option.WithGRPCConn(conn))
+	defer client.Close()
+
 	assert := assert.New(t)
 
-	topic, err := createTopic(assert)
+	topic, err := createTopic(client, ctx, assert)
 	defer topic.Delete(ctx)
 
-	sub := createSubscription(err, topic, assert)
+	sub := createSubscription(client, ctx, err, topic, assert)
 	defer sub.Delete(ctx)
-
-	sample := readSampleLine([]byte(line))
-	s := create(sample)
-	sampleJson, err := s.marshall()
-	assert.Nil(err)
-
-	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		body, err := ioutil.ReadAll(r.Body)
-		assert.Nil(err)
-		assert.Equal(sampleJson, body)
-		w.WriteHeader(http.StatusCreated)
-		w.Write([]byte("{\"id\":\"1111\"}"))
-	}))
-
-	defer ts.Close()
-
-	fmt.Printf("Setting sample service base url %v", ts.URL)
-	err = os.Setenv("SAMPLE_SERVICE_BASE_URL", ts.URL)
-	assert.Nil(err)
 
 	msg := &pubsub.Message{
 		Data: []byte(line),
@@ -154,8 +158,13 @@ func TestDeadletterAsSampleSummaryIdMissing(t *testing.T) {
 	configure()
 	go worker.subscribe(ctx, client)
 
-
 	//sleep a second for the test to complete, then allow everything to shut down
 	time.Sleep(1 * time.Second)
 
+	messages:= srv.Messages()
+	//check there is a single message
+	assert.Equal(len(messages),  1, "should have been a single message sent to the server")
+
+	//and check it hasn't been ack
+	assert.Equal(0, messages[0].Acks)
 }
