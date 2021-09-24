@@ -92,10 +92,6 @@ func TestSubscribe(t *testing.T) {
 	assert.Equal(1, messages[0].Acks)
 }
 
-func handleResponse(w http.ResponseWriter, r *http.Request, assert *assert.Assertions, sampleJson []byte) {
-
-}
-
 func parseSample(err error, assert *assert.Assertions) []byte {
 	sample := readSampleLine([]byte(line))
 	s := create(sample)
