@@ -33,5 +33,5 @@ dns:
 
 gcp:
   project: rm-ras-sandbox
-  topic: sample-jobs
-  subscription: sample-workers
+  topic: sample-file
+  subscription: sample-file
