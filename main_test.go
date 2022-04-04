@@ -93,7 +93,7 @@ func TestSubscribe(t *testing.T) {
 }
 
 func parseSample(err error, assert *assert.Assertions) []byte {
-	sample := readSampleLine([]byte(line))
+	sample, err := readSampleLine([]byte(line))
 	s := create(sample)
 	sampleJson, err := s.marshall()
 	assert.Nil(err)
