@@ -1,14 +1,14 @@
 package main
 
 import (
-	"fmt"
-	"io/ioutil"
-	"testing"
 	"cloud.google.com/go/pubsub"
+	"fmt"
 	"github.com/spf13/viper"
 	"github.com/stretchr/testify/assert"
+	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
+	"testing"
 )
 
 func TestPartySuccess(t *testing.T) {
@@ -32,7 +32,7 @@ func TestPartySuccess(t *testing.T) {
 		},
 		ID: "1",
 	}
-	sample := readSampleLine(line)
+	sample, _ := readSampleLine(line)
 	err := processParty(sample, "test", "test", msg)
 	assert.Nil(err, "error should be nil")
 }
@@ -58,7 +58,7 @@ func TestPartyConflict(t *testing.T) {
 		},
 		ID: "1",
 	}
-	sample := readSampleLine(line)
+	sample, _ := readSampleLine(line)
 	err := processParty(sample, "test", "test", msg)
 	assert.Nil(err, "error should be nil")
 }
@@ -85,7 +85,7 @@ func TestPartyError(t *testing.T) {
 		},
 		ID: "1",
 	}
-	sample := readSampleLine(line)
+	sample, _ := readSampleLine(line)
 	err := processParty(sample, "test", "test", msg)
 	assert.NotNil(err, "error should be nil")
 }
