@@ -49,12 +49,21 @@ type Sample struct {
 func processSample(line []string, sampleSummaryId string, msg *pubsub.Message) (string, error) {
 	logger.Debug("processing sample")
 	s := create(line)
+	if s == nil {
+		err := errors.New("sample is nil")
+		return "", err
+	}
 	s.sampleSummaryId = sampleSummaryId
 	s.msg = msg
 	return s.sendToSampleService()
 }
 
 func create(line []string) *Sample {
+	defer func() {
+		if err := recover(); err != nil {
+			fmt.Println("Recovering from panic in create: ", err)
+		}
+	}()
 	sampleUnit := &Sample{
 		SAMPLEUNITREF: line[0],
 		CHECKLETTER:   line[1],
