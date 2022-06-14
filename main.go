@@ -67,12 +67,12 @@ func (cw CSVWorker) subscribe(ctx context.Context, client *pubsub.Client) {
 		if ok {
 			logger.Info("about to process sample", zap.String("sampleSummaryId", sampleSummaryId))
 			line, err := readSampleLine(data)
-			sampleUnitId, err := processSample(line, sampleSummaryId, msg)
 			if err != nil {
 				logger.Error("error processing line in sample - nacking message", zap.Error(err))
 				//after x number of nacks message will be DLQ
 				msg.Nack()
-			} else
+			} else {
+				sampleUnitId, err := processSample(line, sampleSummaryId, msg)
 				if err != nil {
 					logger.Error("error processing sample - nacking message", zap.Error(err))
 					//after x number of nacks message will be DLQ
@@ -87,6 +87,7 @@ func (cw CSVWorker) subscribe(ctx context.Context, client *pubsub.Client) {
 					}
 					logger.Info("sample processed - acking message")
 					msg.Ack()
+				}
 			}
 		} else {
 			logger.Error("missing sample summary id - sending to DLQ")
