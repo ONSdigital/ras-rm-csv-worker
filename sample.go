@@ -61,7 +61,7 @@ func processSample(line []string, sampleSummaryId string, msg *pubsub.Message) (
 func create(line []string) *Sample {
 	defer func() {
 		if err := recover(); err != nil {
-			fmt.Println("Recovering from panic in create: ", err)
+			fmt.Println("Recovering from panic in sample.go/create: ", err)
 		}
 	}()
 	sampleUnit := &Sample{
