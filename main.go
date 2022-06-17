@@ -5,7 +5,6 @@ import (
 	"cloud.google.com/go/pubsub"
 	"context"
 	"encoding/csv"
-	"fmt"
 	"github.com/blendle/zapdriver"
 	"github.com/spf13/viper"
 	"go.uber.org/zap"
@@ -77,9 +76,7 @@ func (cw CSVWorker) subscribe(ctx context.Context, client *pubsub.Client) {
 				if err != nil {
 					logger.Error("error processing sample - nacking message", zap.Error(err))
 					//after x number of nacks message will be DLQ
-					fmt.Println("about to nack")
 					msg.Nack()
-					fmt.Println("nacked message")
 				} else {
 					//now the sample has been created, lets create the associated party
 					err := processParty(line, sampleSummaryId, sampleUnitId, msg)
