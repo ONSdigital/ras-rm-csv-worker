@@ -66,22 +66,28 @@ func (cw CSVWorker) subscribe(ctx context.Context, client *pubsub.Client) {
 		sampleSummaryId, ok := attribute["sample_summary_id"]
 		if ok {
 			logger.Info("about to process sample", zap.String("sampleSummaryId", sampleSummaryId))
-			line := readSampleLine(data)
-			sampleUnitId, err := processSample(line, sampleSummaryId, msg)
+			line, err := readSampleLine(data)
 			if err != nil {
-				logger.Error("error processing sample - nacking message", zap.Error(err))
+				logger.Error("error processing line in sample - nacking message", zap.Error(err))
 				//after x number of nacks message will be DLQ
 				msg.Nack()
 			} else {
-				//now the sample has been created, lets create the associated party
-				err := processParty(line, sampleSummaryId, sampleUnitId, msg)
+				sampleUnitId, err := processSample(line, sampleSummaryId, msg)
 				if err != nil {
-					logger.Error("error processing party - nacking message", zap.Error(err))
+					logger.Error("error processing sample - nacking message", zap.Error(err))
 					//after x number of nacks message will be DLQ
 					msg.Nack()
+				} else {
+					//now the sample has been created, lets create the associated party
+					err := processParty(line, sampleSummaryId, sampleUnitId, msg)
+					if err != nil {
+						logger.Error("error processing party - nacking message", zap.Error(err))
+						//after x number of nacks message will be DLQ
+						msg.Nack()
+					}
+					logger.Info("sample processed - acking message")
+					msg.Ack()
 				}
-				logger.Info("sample processed - acking message")
-				msg.Ack()
 			}
 		} else {
 			logger.Error("missing sample summary id - sending to DLQ")
@@ -95,17 +101,18 @@ func (cw CSVWorker) subscribe(ctx context.Context, client *pubsub.Client) {
 	}
 }
 
-func readSampleLine(line []byte) []string {
+func readSampleLine(line []byte) ([]string, error) {
 	logger.Debug("reading csv line")
 	r := csv.NewReader(bytes.NewReader(line))
 	r.Comma = ':'
 
 	sample, err := r.Read()
 	if err != nil {
-		logger.Fatal("unable to parse sample csv", zap.Error(err))
+		logger.Error("unable to parse sample csv", zap.Error(err))
+		return nil, err
 	}
 	logger.Debug("read sample", zap.Strings("sample", sample))
-	return sample
+	return sample, nil
 }
 
 func setDefaults() {

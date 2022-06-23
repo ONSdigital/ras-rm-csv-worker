@@ -34,7 +34,7 @@ func TestSampleSuccess(t *testing.T) {
 		},
 		ID: "1",
 	}
-	sample := readSampleLine(line)
+	sample, _ := readSampleLine(line)
 	_, err := processSample(sample, "test", msg)
 	assert.Nil(err, "error should be nil")
 }
@@ -61,7 +61,7 @@ func TestSampleError(t *testing.T) {
 		ID: "1",
 	}
 
-	sample := readSampleLine(line)
+	sample, _ := readSampleLine(line)
 	_, err := processSample(sample, "test", msg)
 	assert.NotNil(t, err, "error should not be nil")
 }
