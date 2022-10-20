@@ -156,9 +156,8 @@ func (s Sample) sendHttpRequest(url string, payload []byte) (string, error) {
 		}
 		return sampleUnitId, nil
 	} else if resp.StatusCode == http.StatusConflict {
-		logger.Warn("attempted to create duplicate sample", zap.Int("status code", resp.StatusCode), zap.String("sampleUnitRef", s.SAMPLEUNITREF), zap.String("messageId", s.msg.ID))
-		// if this sample unit has already been created attempt to retrieve the sample unit id
-		return s.getSampleUnitID()
+		logger.Error("duplicate sample unit detected", zap.Int("status code", resp.StatusCode), zap.String("sampleUnitRef", s.SAMPLEUNITREF), zap.String("messageId", s.msg.ID))
+		return "", errors.New(fmt.Sprintf("Sample file has duplicate sample unit"))
 	} else {
 		logger.Error("sample not created status", zap.Int("status code", resp.StatusCode), zap.String("sampleUnitRef", s.SAMPLEUNITREF), zap.String("messageId", s.msg.ID))
 		return "", errors.New(fmt.Sprintf("sample not created - status code %d", resp.StatusCode))
