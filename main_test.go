@@ -8,7 +8,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"google.golang.org/api/option"
 	"google.golang.org/grpc"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -45,7 +45,7 @@ func TestSubscribe(t *testing.T) {
 	sampleJson := parseSample(err, assert)
 
 	sampleServer := httptest.NewServer(http.HandlerFunc( func(w http.ResponseWriter, r *http.Request) {
-		body, err := ioutil.ReadAll(r.Body)
+		body, err := io.ReadAll(r.Body)
 		assert.Nil(err)
 		assert.Equal(sampleJson, body)
 		w.WriteHeader(http.StatusCreated)
