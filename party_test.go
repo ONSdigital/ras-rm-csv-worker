@@ -63,7 +63,6 @@ func TestPartyConflict(t *testing.T) {
 	assert.Nil(err, "error should be nil")
 }
 
-
 func TestPartyError(t *testing.T) {
 	assert := assert.New(t)
 	ts := httptest.NewUnstartedServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -99,7 +98,6 @@ func TestPartyServerURL(t *testing.T) {
 
 	assert.Equal("https://127.0.0.1/party-api/v1/parties", p.getPartyServiceUrl())
 }
-
 
 func TestPartySendHttpRequest(t *testing.T) {
 	p := &Party{}

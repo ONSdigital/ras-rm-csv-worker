@@ -44,7 +44,7 @@ func TestSubscribe(t *testing.T) {
 
 	sampleJson := parseSample(err, assert)
 
-	sampleServer := httptest.NewServer(http.HandlerFunc( func(w http.ResponseWriter, r *http.Request) {
+	sampleServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		body, err := ioutil.ReadAll(r.Body)
 		assert.Nil(err)
 		assert.Equal(sampleJson, body)
@@ -52,7 +52,7 @@ func TestSubscribe(t *testing.T) {
 		w.Write([]byte("{\"id\":\"1111\"}"))
 	}))
 
-	partyServer := httptest.NewServer(http.HandlerFunc( func(w http.ResponseWriter, r *http.Request) {
+	partyServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusCreated)
 		w.Write([]byte("{\"id\":\"1111\"}"))
 	}))
@@ -100,7 +100,7 @@ func parseSample(err error, assert *assert.Assertions) []byte {
 	return sampleJson
 }
 
-func createSubscription(client *pubsub.Client, ctx  context.Context, err error, topic *pubsub.Topic, assert *assert.Assertions) *pubsub.Subscription {
+func createSubscription(client *pubsub.Client, ctx context.Context, err error, topic *pubsub.Topic, assert *assert.Assertions) *pubsub.Subscription {
 	sub, err := client.CreateSubscription(ctx, "sample-file", pubsub.SubscriptionConfig{
 		Topic: topic,
 	})
@@ -110,7 +110,7 @@ func createSubscription(client *pubsub.Client, ctx  context.Context, err error, 
 	return sub
 }
 
-func createTopic(client *pubsub.Client, ctx  context.Context, assert *assert.Assertions) (*pubsub.Topic, error) {
+func createTopic(client *pubsub.Client, ctx context.Context, assert *assert.Assertions) (*pubsub.Topic, error) {
 	topic, err := client.CreateTopic(ctx, "sample-file")
 	assert.Nil(err)
 	assert.NotNil(topic)
@@ -157,9 +157,9 @@ func TestNoAckAsSampleSummaryIdMissing(t *testing.T) {
 	//sleep a second for the test to complete, then allow everything to shut down
 	time.Sleep(1 * time.Second)
 
-	messages:= srv.Messages()
+	messages := srv.Messages()
 	//check there is a single message
-	assert.Equal(len(messages),  1, "should have been a single message sent to the server")
+	assert.Equal(len(messages), 1, "should have been a single message sent to the server")
 
 	//and check it hasn't been ack
 	assert.Equal(0, messages[0].Acks)

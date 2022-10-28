@@ -178,7 +178,7 @@ func (p Party) sendHttpRequest(url string, payload []byte) error {
 	} else if resp.StatusCode == http.StatusConflict {
 		logger.Warn("party already exists", zap.String("sampleUnitRef", p.SAMPLEUNITREF), zap.String("messageId", p.msg.ID))
 		return nil
-	}  else {
+	} else {
 		logger.Error("party not created", zap.Int("status code", resp.StatusCode), zap.String("sampleUnitRef", p.SAMPLEUNITREF), zap.String("messageId", p.msg.ID))
 		return errors.New(fmt.Sprintf("sample not created - status code %d", resp.StatusCode))
 	}
