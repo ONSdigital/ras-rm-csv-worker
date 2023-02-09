@@ -8,7 +8,7 @@ import (
 	"fmt"
 	"github.com/spf13/viper"
 	"go.uber.org/zap"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"strconv"
 )
@@ -166,7 +166,7 @@ func (p Party) sendHttpRequest(url string, payload []byte) error {
 		return err
 	}
 	defer resp.Body.Close()
-	body, err := ioutil.ReadAll(resp.Body)
+	body, err := io.ReadAll(resp.Body)
 	if err != nil {
 		logger.Error("error reading HTTP response", zap.Error(err))
 		return err

@@ -7,7 +7,7 @@ import (
 	"errors"
 	"fmt"
 	"go.uber.org/zap"
-	"io/ioutil"
+	"io"
 	"net/http"
 
 	"github.com/spf13/viper"
@@ -132,7 +132,7 @@ func (s Sample) sendHttpRequest(url string, payload []byte) (string, error) {
 		return "", err
 	}
 	defer resp.Body.Close()
-	body, err := ioutil.ReadAll(resp.Body)
+	body, err := io.ReadAll(resp.Body)
 	if err != nil {
 		logger.Error("error reading HTTP response", zap.Error(err))
 		return "", err
@@ -178,7 +178,7 @@ func (s Sample) getSampleUnitID() (string, error) {
 		return "", err
 	}
 	defer resp.Body.Close()
-	body, err := ioutil.ReadAll(resp.Body)
+	body, err := io.ReadAll(resp.Body)
 	if err != nil {
 		logger.Error("error reading HTTP response", zap.Error(err))
 		return "", err

@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"github.com/spf13/viper"
 	"github.com/stretchr/testify/assert"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -112,7 +112,7 @@ func TestPartySendHttpRequest(t *testing.T) {
 	payload := []byte("TEST")
 
 	ts := httptest.NewUnstartedServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		body, err := ioutil.ReadAll(r.Body)
+		body, err := io.ReadAll(r.Body)
 		assert.Nil(err)
 		assert.Equal(payload, body)
 		w.WriteHeader(http.StatusCreated)
@@ -154,7 +154,7 @@ func TestPartySendHttpRequestWrongStatus(t *testing.T) {
 	payload := []byte("TEST")
 
 	ts := httptest.NewUnstartedServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		body, err := ioutil.ReadAll(r.Body)
+		body, err := io.ReadAll(r.Body)
 		assert.Nil(err)
 		assert.Equal(payload, body)
 		w.WriteHeader(http.StatusAccepted)
