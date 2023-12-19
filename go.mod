@@ -1,6 +1,6 @@
 module github.com/ONSdigital/ras-rm-sample/worker
 
-go 1.20
+go 1.21
 
 require (
 	cloud.google.com/go/pubsub v1.31.0
