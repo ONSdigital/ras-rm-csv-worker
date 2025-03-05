@@ -2,8 +2,6 @@ module github.com/ONSdigital/ras-rm-sample/worker
 
 go 1.23.0
 
-toolchain go1.23.6
-
 require (
 	cloud.google.com/go/pubsub v1.47.0
 	github.com/blendle/zapdriver v1.3.1
