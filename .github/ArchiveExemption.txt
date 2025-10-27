@@ -1,0 +1,1 @@
+This is a core microservice which facilitates the production of a sample file and party, through consuming a pubsub subscription (single line CSV)
