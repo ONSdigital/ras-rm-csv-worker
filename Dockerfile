@@ -1,4 +1,4 @@
-FROM golang:1.25-alpine
+FROM --platform=$BUILDPLATFORM golang:1.25-alpine
 
 RUN mkdir "/src"
 WORKDIR "/src"
