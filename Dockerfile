@@ -5,6 +5,6 @@ WORKDIR "/src"
 
 COPY . .
 
-RUN GOOS=linux GOARCH=arm64 CGO_ENABLED=0 go build
+RUN go build
 RUN ls
 CMD "./worker"
