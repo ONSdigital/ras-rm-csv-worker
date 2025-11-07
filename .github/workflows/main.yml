@@ -17,7 +17,9 @@ env:
   CHART_DIRECTORY: _infra/helm/csv-worker
   SPINNAKER_TOPIC: ${{ secrets.SPINNAKER_TOPIC }}
   ARTIFACT_BUCKET: ${{ secrets.ARTIFACT_BUCKET }}
-
+  GOOS: linux
+  GOARCH: arm64
+  CGO_ENABLED: 0
 jobs:
   build:
     name: Build
