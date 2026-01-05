@@ -18,7 +18,7 @@ env:
   SPINNAKER_TOPIC: ${{ secrets.SPINNAKER_TOPIC }}
   ARTIFACT_BUCKET: ${{ secrets.ARTIFACT_BUCKET }}
   GOOS: linux
-  GOARCH: arm64
+  GOARCH: amd64
   CGO_ENABLED: 0
 jobs:
   build:
@@ -54,7 +54,7 @@ jobs:
       - name: Build Docker Image
         if: github.ref != 'refs/heads/main'
         run: |
-          docker build --platform linux/arm64 -t "$REGISTRY_HOSTNAME"/"$GAR_GOOGLE_PROJECT_ID"/"$GAR_REPOSITORY"/"$IMAGE":${{ env.pr_number }} .
+          docker build --platform linux/amd64,linux/arm64 -t "$REGISTRY_HOSTNAME"/"$GAR_GOOGLE_PROJECT_ID"/"$GAR_REPOSITORY"/"$IMAGE":${{ env.pr_number }} .
       - name: Push dev image
         if: github.ref != 'refs/heads/main'
         run: |
