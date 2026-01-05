@@ -51,7 +51,7 @@ jobs:
           echo "$PR"
           echo "pr_number=pr-$PR" >> $GITHUB_ENV
       - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
+        uses: docker/setup-buildx-action@v3 # v3.X.X Pin this once its working
       # Build the Docker image
       - name: Build Docker Image
         if: github.ref != 'refs/heads/main'
