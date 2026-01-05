@@ -58,10 +58,6 @@ jobs:
           docker buildx build --platform linux/amd64,linux/arm64 \
           -t "$REGISTRY_HOSTNAME"/"$GAR_GOOGLE_PROJECT_ID"/"$GAR_REPOSITORY"/"$IMAGE":${{ env.pr_number }} \
           --push .
-      #      - name: Push dev image
-#        if: github.ref != 'refs/heads/main'
-#        run: |
-#          docker push "$REGISTRY_HOSTNAME"/"$GAR_GOOGLE_PROJECT_ID"/"$GAR_REPOSITORY"/"$IMAGE":${{ env.pr_number }}
       - name: template helm
         run: |
           helm template $CHART_DIRECTORY
