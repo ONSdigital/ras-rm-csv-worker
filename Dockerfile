@@ -5,8 +5,8 @@ WORKDIR "/src"
 
 COPY . .
 
-RUN go build -v -o main
-RUN chmod 755 main
+RUN go build -v -o worker
+RUN chmod 755 worker
 
 FROM --platform=$BUILDPLATFORM golang:1.25-alpine AS final-stage
 
@@ -15,10 +15,10 @@ RUN mkdir -p "/opt/csv-worker"
 RUN chown csv-worker-user:csv-worker-group /opt/csv-worker
 
 WORKDIR "/opt/csv-worker"
-COPY --from=build-stage /src/main .
-RUN chmod 550 /opt/csv-worker/main
-RUN chown csv-worker-user:csv-worker-group /opt/csv-worker/main
+COPY --from=build-stage /src/worker .
+RUN chmod 550 /opt/csv-worker/worker
+RUN chown csv-worker-user:csv-worker-group /opt/csv-worker/worker
 
 USER csv-worker-user
 
-CMD "./main"
+CMD "./worker"
