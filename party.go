@@ -2,15 +2,17 @@ package main
 
 import (
 	"bytes"
-	"cloud.google.com/go/pubsub"
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/spf13/viper"
-	"go.uber.org/zap"
 	"io"
 	"net/http"
 	"strconv"
+	"time"
+
+	"cloud.google.com/go/pubsub"
+	"github.com/spf13/viper"
+	"go.uber.org/zap"
 )
 
 type Party struct {
@@ -152,7 +154,18 @@ func (p Party) getPartyServiceUrl() string {
 func (p Party) sendHttpRequest(url string, payload []byte) error {
 	username := viper.GetString("SECURITY_USER_NAME")
 	password := viper.GetString("SECURITY_USER_PASSWORD")
-	client := &http.Client{}
+
+	transport := &http.Transport{
+		DisableKeepAlives:   false,
+		MaxIdleConns:        100,
+		MaxIdleConnsPerHost: 10,
+		IdleConnTimeout:     1500 * time.Millisecond, // Gunicorn closes idle connections after 2 secs
+	}
+
+	client := &http.Client{
+		Transport: transport,
+		Timeout:   30 * time.Second,
+	}
 	req, err := http.NewRequest("POST", url, bytes.NewReader(payload))
 	if err != nil {
 		logger.Error("error creating HTTP request", zap.Error(err))
@@ -178,7 +191,7 @@ func (p Party) sendHttpRequest(url string, payload []byte) error {
 	} else if resp.StatusCode == http.StatusConflict {
 		logger.Warn("party already exists", zap.String("sampleUnitRef", p.SAMPLEUNITREF), zap.String("messageId", p.msg.ID))
 		return nil
-	}  else {
+	} else {
 		logger.Error("party not created", zap.Int("status code", resp.StatusCode), zap.String("sampleUnitRef", p.SAMPLEUNITREF), zap.String("messageId", p.msg.ID))
 		return errors.New(fmt.Sprintf("sample not created - status code %d", resp.StatusCode))
 	}

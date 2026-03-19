@@ -2,9 +2,10 @@ package main
 
 import (
 	"bytes"
-	"cloud.google.com/go/pubsub"
 	"context"
 	"encoding/csv"
+
+	"cloud.google.com/go/pubsub"
 	"github.com/blendle/zapdriver"
 	"github.com/spf13/viper"
 	"go.uber.org/zap"
