@@ -75,14 +75,18 @@ func (cw CSVWorker) subscribe(ctx context.Context, client *pubsub.Client) {
 			} else {
 				sampleUnitId, err := processSample(line, sampleSummaryId, msg)
 				if err != nil {
-					logger.Error("error processing sample - nacking message", zap.Error(err))
+					logger.Warn("error processing sample - nacking message",
+						zap.Error(err),
+						zap.String("sampleUnitId", sampleUnitId))
 					//after x number of nacks message will be DLQ
 					msg.Nack()
 				} else {
 					//now the sample has been created, lets create the associated party
 					err := processParty(line, sampleSummaryId, sampleUnitId, msg)
 					if err != nil {
-						logger.Error("error processing party - nacking message", zap.Error(err))
+						logger.Warn("error processing party - nacking message",
+							zap.Error(err),
+							zap.String("sampleUnitId", sampleUnitId))
 						//after x number of nacks message will be DLQ
 						msg.Nack()
 					}
