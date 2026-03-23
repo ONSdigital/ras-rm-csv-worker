@@ -159,7 +159,7 @@ func (p Party) sendHttpRequest(url string, payload []byte) error {
 		DisableKeepAlives:   false,
 		MaxIdleConns:        100,
 		MaxIdleConnsPerHost: 10,
-		IdleConnTimeout:     4000 * time.Millisecond, // Gunicorn closes idle connections after 2 secs
+		IdleConnTimeout:     1500 * time.Millisecond, // Gunicorn closes idle connections after 2 secs
 	}
 
 	client := &http.Client{
@@ -175,7 +175,7 @@ func (p Party) sendHttpRequest(url string, payload []byte) error {
 	req.Header.Add("content-type", "application/json")
 	resp, err := client.Do(req)
 	if err != nil {
-		logger.Error("error sending HTTP request", zap.Error(err))
+		logger.Warn("error sending HTTP request", zap.Error(err))
 		return err
 	}
 	defer resp.Body.Close()
