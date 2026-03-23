@@ -156,7 +156,7 @@ func (p Party) sendHttpRequest(url string, payload []byte) error {
 	password := viper.GetString("SECURITY_USER_PASSWORD")
 
 	transport := &http.Transport{
-		DisableKeepAlives:   true,
+		DisableKeepAlives:   false,
 		MaxIdleConns:        100,
 		MaxIdleConnsPerHost: 10,
 		IdleConnTimeout:     1500 * time.Millisecond, // Gunicorn closes idle connections after 2 secs
