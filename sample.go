@@ -2,13 +2,14 @@ package main
 
 import (
 	"bytes"
-	"cloud.google.com/go/pubsub"
 	"encoding/json"
 	"errors"
 	"fmt"
-	"go.uber.org/zap"
 	"io"
 	"net/http"
+
+	"cloud.google.com/go/pubsub"
+	"go.uber.org/zap"
 
 	"github.com/spf13/viper"
 )
@@ -156,7 +157,7 @@ func (s Sample) sendHttpRequest(url string, payload []byte) (string, error) {
 		}
 		return sampleUnitId, nil
 	} else if resp.StatusCode == http.StatusConflict {
-		logger.Warn("attempted to create duplicate sample", zap.Int("status code", resp.StatusCode), zap.String("sampleUnitRef", s.SAMPLEUNITREF), zap.String("messageId", s.msg.ID))
+		logger.Warn("attempted to create duplicate sample unit", zap.Int("status code", resp.StatusCode), zap.String("sampleUnitRef", s.SAMPLEUNITREF), zap.String("messageId", s.msg.ID))
 		// if this sample unit has already been created attempt to retrieve the sample unit id
 		return s.getSampleUnitID()
 	} else {
