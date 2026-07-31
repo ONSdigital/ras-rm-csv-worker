@@ -22,10 +22,6 @@ spec:
       serviceAccountName: { { .Values.serviceAccount.name } }
       imagePullSecrets:
         { { - toYaml .Values.imagePullSecrets | nindent 8 } }
-      volumes:
-      - name: google-cloud-key
-        secret:
-          secretName: google-application-credentials
       containers:
         - name: {{ .Chart.Name }}
           {{- if eq .Values.image.tag "latest"}}
