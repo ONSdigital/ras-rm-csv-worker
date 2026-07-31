@@ -35,7 +35,7 @@ serviceAccount:
   name: ras-rm-k8s-services
 
 imagePullSecrets:
-  - name: gar-secret
+  name: gar-secret
 
 gcp:
   project: rm-ras-sandbox
