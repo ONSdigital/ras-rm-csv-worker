@@ -64,7 +64,7 @@ jobs:
       - name: template helm
         if: github.actor != 'dependabot[bot]'
         run: |
-          helm template $CHART_DIRECTORY
+          helm template $CHART_DIRECTORY --debug
       - name: Set current tag
         if: github.ref != 'refs/heads/main'
         id: vars
