@@ -101,7 +101,7 @@ func (cw CSVWorker) subscribe(ctx context.Context, client *pubsub.Client) {
 	})
 
 	if err != nil {
-		logger.Error("error subscribing")
+		logger.Error("error subscribing", zap.Error(err))
 		cancel()
 	}
 }

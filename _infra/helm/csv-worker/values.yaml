@@ -33,5 +33,5 @@ dns:
 
 gcp:
   project: rm-ras-sandbox
-  topic: sample-file
-  subscription: sample-file
+  topic: sample-file-bailew
+  subscription: sample-file-bailew
