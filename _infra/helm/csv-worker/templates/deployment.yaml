@@ -65,3 +65,4 @@ spec:
                 key: security-password
           resources:
             {{ toYaml .Values.resources | nindent 12 }}
+          
