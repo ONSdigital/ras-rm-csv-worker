@@ -1,4 +1,4 @@
-FROM --platform=$BUILDPLATFORM golang:1.25-alpine AS build-stage
+FROM --platform=$BUILDPLATFORM golang:1.26.5-alpine AS build-stage
 
 RUN mkdir "/src"
 WORKDIR "/src"
