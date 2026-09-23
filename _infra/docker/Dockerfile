@@ -1,4 +1,4 @@
-FROM --platform=$BUILDPLATFORM golang:1.25-alpine AS build-stage
+FROM --platform=$BUILDPLATFORM golang:1.26.5-alpine AS build-stage
 
 RUN mkdir "/src"
 WORKDIR "/src"
@@ -8,7 +8,7 @@ COPY . .
 RUN go build -v -o worker
 RUN chmod 755 worker
 
-FROM --platform=$BUILDPLATFORM golang:1.25-alpine AS final-stage
+FROM --platform=$BUILDPLATFORM golang:1.26.5-alpine AS final-stage
 
 RUN addgroup -S csv-worker-group && adduser -S csv-worker-user -G csv-worker-group
 RUN mkdir -p "/opt/csv-worker"
