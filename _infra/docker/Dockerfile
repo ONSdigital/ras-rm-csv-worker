@@ -1,14 +1,18 @@
 FROM --platform=$BUILDPLATFORM golang:1.26.5-alpine AS build-stage
+ARG TARGETOS
+ARG TARGETARCH
 
 RUN mkdir "/src"
 WORKDIR "/src"
 
 COPY . .
 
-RUN go build -v -o worker
+RUN CGO_ENABLED=0 GOOS=${TARGETOS:-linux} GOARCH=${TARGETARCH} go build -v -o worker
 RUN chmod 755 worker
 
-FROM --platform=$BUILDPLATFORM golang:1.26.5-alpine AS final-stage
+FROM alpine:3.24 AS final-stage
+
+RUN apk add --no-cache ca-certificates
 
 RUN addgroup -S csv-worker-group && adduser -S csv-worker-user -G csv-worker-group
 RUN mkdir -p "/opt/csv-worker"
