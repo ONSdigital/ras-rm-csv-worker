@@ -1,4 +1,4 @@
-env: sandbox
+env: minikube
 
 image:
   devRepo: europe-west2-docker.pkg.dev/ons-ci-rmrasbs/images
