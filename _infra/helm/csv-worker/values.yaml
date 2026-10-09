@@ -34,9 +34,6 @@ dns:
 serviceAccount:
   name: ras-rm-k8s-services
 
-imagePullSecrets:
-  - name: gar-secret
-
 gcp:
   project: rm-ras-sandbox
   topic: sample-file
